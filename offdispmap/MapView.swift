@@ -9,116 +9,16 @@ import Foundation
 
 import SwiftUI
 import MapKit
-import SwiftSoup
 
-
-struct Dispensary {
-    var name: String
-    var address: String
-    var city: String
-    var zipCode: String
-    var website: String
-}
-
-class DispensaryAnnotation: NSObject, MKAnnotation {
-    var coordinate: CLLocationCoordinate2D
-    var title: String?
-    var subtitle: String?
-    var idx: String?
-    
-    init(name: String, address: String, coordinate: CLLocationCoordinate2D, idx: String?) {
-        self.title = name
-        self.subtitle = address
-        self.coordinate = coordinate
-        self.idx = idx
-    }
-}
-
-class DispensaryManager {
-    var geocoder = CLGeocoder()
-    
-    func fetchAndPrepareData() async throws -> ([Dispensary], [DispensaryAnnotation]) {
-        let urlString = "https://cannabis.ny.gov/dispensary-location-verification"
-        guard let url = URL(string: urlString) else {
-            throw URLError(.badURL)
-        }
-        print("got url")
-        let (data, _) = try await URLSession.shared.data(from: url)
-        guard let htmlString = String(data: data, encoding: .utf8) else {
-            throw NSError(domain: "DataDecodingError", code: 1001, userInfo: [NSLocalizedDescriptionKey: "Failed to decode data into string"])
-        }
-        var dispensaries = parseHTMLContent(htmlString)
-        dispensaries = Array(dispensaries.prefix(10))
-        let annotations = await geocodeDispensaries(dispensaries: dispensaries)
-        return (dispensaries, annotations)
-    }
-    
-    
-    private func parseHTMLContent(_ html: String) -> [Dispensary] {
-        do {
-            var dispensaries: [Dispensary] = []
-            let doc = try SwiftSoup.parse(html)
-            let rows = try doc.select("table tbody tr")
-            
-            for row in rows {
-                let columns = try row.select("td")
-                if columns.size() >= 5 {
-                    let name = try columns.get(0).text()
-                    let address = try columns.get(1).text()
-                    let city = try columns.get(2).text()
-                    let zipCode = try columns.get(3).text()
-                    let website = try columns.get(4).text()
-                    
-                    let dispensary = Dispensary(
-                        name: name,
-                        address: address,
-                        city: city,
-                        zipCode: zipCode,
-                        website: website
-                    )
-                    dispensaries.append(dispensary)
-                }
-            }
-            return dispensaries
-        } catch {
-            print("Error parsing HTML: \(error)")
-            return []
-        }
-    }
-    
-    private func geocodeDispensaries(dispensaries: [Dispensary]) async -> [DispensaryAnnotation] {
-        var annotations: [DispensaryAnnotation] = []
-        
-        for dispensary in dispensaries {
-            let fullAddress = "\(dispensary.address), \(dispensary.city), \(dispensary.zipCode)"
-            if let numberPrefix = dispensary.name.split(separator: ".").first?.trimmingCharacters(in: .whitespaces) {
-                if let annotation = await self.geocodeAddress(dispensary: dispensary, fullAddress: fullAddress, idx: numberPrefix) {
-                    annotations.append(annotation)
-                }
-            }
-        }
-        
-        return annotations
-    }
-    
-    private func geocodeAddress(dispensary: Dispensary, fullAddress: String, idx: String) async -> DispensaryAnnotation? {
-        do {
-            let placemarks = try await geocoder.geocodeAddressString(fullAddress)
-            if let coordinate = placemarks.first?.location?.coordinate {
-                return DispensaryAnnotation(name: dispensary.name, address: fullAddress, coordinate: coordinate, idx: idx)
-            }
-            return nil
-        } catch {
-            print("Geocoding failed with error: \(error.localizedDescription)")
-            return nil
-        }
-    }
-    
-}
 
 struct MapView: UIViewRepresentable {
     @Binding var annotations: [DispensaryAnnotation]
     @Binding var selectedAnnotation: DispensaryAnnotation?
+    let nyc = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060), // Default to NYC
+        latitudinalMeters: 10000,
+        longitudinalMeters: 10000
+    )
     
     
     func makeUIView(context: Context) -> MKMapView {
@@ -126,11 +26,6 @@ struct MapView: UIViewRepresentable {
         mapView.delegate = context.coordinator
         mapView.register(MKMarkerAnnotationView.self, forAnnotationViewWithReuseIdentifier: NSStringFromClass(DispensaryAnnotation.self))
         
-        let nyc = MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060), // Default to NYC
-            latitudinalMeters: 10000,
-            longitudinalMeters: 10000
-        )
         mapView.setRegion(nyc, animated: true)
         
         
@@ -143,10 +38,11 @@ struct MapView: UIViewRepresentable {
         
         // Add new annotations from the annotations binding
         uiView.addAnnotations(annotations)
-        
         if let selectedAnnotation = selectedAnnotation {
             let region = MKCoordinateRegion(center: selectedAnnotation.coordinate, latitudinalMeters: 500, longitudinalMeters: 500)
             uiView.setRegion(region, animated: true)
+        } else if annotations.count == 1 {
+            uiView.setRegion(nyc, animated: true)
         } else {
             updateMapRegionToFitAnnotations(uiView)
             
