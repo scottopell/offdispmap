@@ -14,6 +14,9 @@
 		4700609C2C1F18C5008B3692 /* offdispmapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4700609B2C1F18C5008B3692 /* offdispmapTests.swift */; };
 		470060A62C1F18C5008B3692 /* offdispmapUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 470060A52C1F18C5008B3692 /* offdispmapUITests.swift */; };
 		470060A82C1F18C5008B3692 /* offdispmapUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 470060A72C1F18C5008B3692 /* offdispmapUITestsLaunchTests.swift */; };
+		471EBF1D2C1F370E0016E689 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 471EBF1C2C1F370E0016E689 /* SwiftSoup */; };
+		471EBF1F2C1F43780016E689 /* DynamicMapContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471EBF1E2C1F43780016E689 /* DynamicMapContent.swift */; };
+		471EBF212C1F48C00016E689 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471EBF202C1F48C00016E689 /* MapView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +47,8 @@
 		470060A12C1F18C5008B3692 /* offdispmapUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = offdispmapUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		470060A52C1F18C5008B3692 /* offdispmapUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = offdispmapUITests.swift; sourceTree = "<group>"; };
 		470060A72C1F18C5008B3692 /* offdispmapUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = offdispmapUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		471EBF1E2C1F43780016E689 /* DynamicMapContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicMapContent.swift; sourceTree = "<group>"; };
+		471EBF202C1F48C00016E689 /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				471EBF1D2C1F370E0016E689 /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +104,8 @@
 				4700608C2C1F18C4008B3692 /* ContentView.swift */,
 				4700608E2C1F18C5008B3692 /* Assets.xcassets */,
 				470060902C1F18C5008B3692 /* Preview Content */,
+				471EBF1E2C1F43780016E689 /* DynamicMapContent.swift */,
+				471EBF202C1F48C00016E689 /* MapView.swift */,
 			);
 			path = offdispmap;
 			sourceTree = "<group>";
@@ -143,6 +151,9 @@
 			dependencies = (
 			);
 			name = offdispmap;
+			packageProductDependencies = (
+				471EBF1C2C1F370E0016E689 /* SwiftSoup */,
+			);
 			productName = offdispmap;
 			productReference = 470060872C1F18C4008B3692 /* offdispmap.app */;
 			productType = "com.apple.product-type.application";
@@ -215,6 +226,9 @@
 				Base,
 			);
 			mainGroup = 4700607E2C1F18C4008B3692;
+			packageReferences = (
+				471EBF1B2C1F370E0016E689 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+			);
 			productRefGroup = 470060882C1F18C4008B3692 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -258,7 +272,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				4700608D2C1F18C4008B3692 /* ContentView.swift in Sources */,
+				471EBF212C1F48C00016E689 /* MapView.swift in Sources */,
 				4700608B2C1F18C4008B3692 /* offdispmapApp.swift in Sources */,
+				471EBF1F2C1F43780016E689 /* DynamicMapContent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -422,6 +438,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"offdispmap/Preview Content\"";
+				DEVELOPMENT_TEAM = X2ULA6KJUN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -450,6 +467,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"offdispmap/Preview Content\"";
+				DEVELOPMENT_TEAM = X2ULA6KJUN;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -582,6 +600,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		471EBF1B2C1F370E0016E689 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		471EBF1C2C1F370E0016E689 /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 471EBF1B2C1F370E0016E689 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4700607F2C1F18C4008B3692 /* Project object */;
 }
