@@ -32,6 +32,7 @@ class Dispensary: NSObject {
         self.coordinate = coordinate
         self.fullAddress = "\(address), \(city), \(zipCode)"
 
+        // todo move parsing idx logic into here and remove idx prefix from name
         self.idx = idx
     }
     
@@ -93,12 +94,6 @@ class DispensaryManager {
         return dispensaries
     }
     
-    func fetchAnnotations(dispensaries: [Dispensary]) async throws -> [DispensaryAnnotation] {
-        let annotations = await geocodeDispensaries(dispensaries: dispensaries)
-        return annotations
-    }
-    
-    
     private func parseHTMLContent(_ html: String) -> [Dispensary] {
         do {
             var dispensaries: [Dispensary] = []
@@ -133,37 +128,7 @@ class DispensaryManager {
             return []
         }
     }
-    
-    private func geocodeDispensaries(dispensaries: [Dispensary]) async -> [DispensaryAnnotation] {
-        var annotations: [DispensaryAnnotation] = []
-        
-        for dispensary in dispensaries {
-            let fullAddress = "\(dispensary.address), \(dispensary.city), \(dispensary.zipCode)"
-            if let numberPrefix = dispensary.name.split(separator: ".").first?.trimmingCharacters(in: .whitespaces) {
-                if let annotation = await self.geocodeAddress(dispensary: dispensary, fullAddress: fullAddress, idx: numberPrefix) {
-                    annotations.append(annotation)
-                }
-            }
-        }
-        
-        return annotations
-    }
-    
-    private func geocodeAddress(dispensary: Dispensary, fullAddress: String, idx: String) async -> DispensaryAnnotation? {
-        do {
-            let placemarks = try await geocoder.geocodeAddressString(fullAddress)
-            if let coordinate = placemarks.first?.location?.coordinate {
-                return DispensaryAnnotation(dispensary: dispensary, name: dispensary.name, address: fullAddress, coordinate: coordinate, idx: idx)
-            }
-            return nil
-        } catch {
-            print("Geocoding failed with error: \(error.localizedDescription)")
-            return nil
-        }
-    }
-    
 }
-
 
 @MainActor
 class MapViewModel: ObservableObject {
@@ -190,15 +155,6 @@ class MapViewModel: ObservableObject {
             dispensaryAnnotations.append(annotation)
         } else {
             print("Was asked to load the annotation for dispensary \(dispensary.name) but couldn't do it")
-        }
-    }
-    
-    func loadAnnotations() async {
-        do {
-            dispensaryAnnotations = try await dispensaryManager.fetchAnnotations(dispensaries: allDispensaries)
-        } catch {
-            print("Failed to load data: \(error)")
-        
         }
     }
 }
