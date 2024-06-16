@@ -10,6 +10,8 @@ import Foundation
 import SwiftUI
 import MapKit
 
+// referenced https://developer.apple.com/documentation/mapkit/mapkit_for_appkit_and_uikit/mapkit_annotations/annotating_a_map_with_custom_data
+// while building this
 
 struct MapView: UIViewRepresentable {
     @Binding var annotations: [DispensaryAnnotation]

@@ -94,6 +94,7 @@ class DispensaryManager {
         return dispensaries
     }
     
+    // todo surface There are currently 134 adult-use cannabis dispensaries across
     private func parseHTMLContent(_ html: String) -> [Dispensary] {
         do {
             var dispensaries: [Dispensary] = []
@@ -109,6 +110,9 @@ class DispensaryManager {
                     let zipCode = try columns.get(3).text()
                     let website = try columns.get(4).text()
                     let numberPrefix = name.split(separator: ".").first?.trimmingCharacters(in: .whitespaces)
+                    
+                    // todo handle ***ATTENTION: This is a Temporary Delivery Only Location. No in-person or pre-order sales are allowed at this location. For a list of areas that are available for delivery, please check the licensee's website directly.***
+                    // eg 22. EK Green LLC (dba Canterra)***    -    Tonawanda    -
                     
                     let dispensary = Dispensary(
                         name: name,
