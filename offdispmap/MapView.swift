@@ -30,7 +30,7 @@ class DispensaryAnnotation: NSObject, MKAnnotation {
         self.title = name
         self.subtitle = address
         self.coordinate = coordinate
-        self.idx = idx  // Initialize the index
+        self.idx = idx
     }
 }
 
@@ -47,12 +47,9 @@ class DispensaryManager {
         guard let htmlString = String(data: data, encoding: .utf8) else {
             throw NSError(domain: "DataDecodingError", code: 1001, userInfo: [NSLocalizedDescriptionKey: "Failed to decode data into string"])
         }
-        print("fetched response")
         var dispensaries = parseHTMLContent(htmlString)
         dispensaries = Array(dispensaries.prefix(10))
-        print("parsed html")
         let annotations = await geocodeDispensaries(dispensaries: dispensaries)
-        print("got annotations \(annotations)")
         return (dispensaries, annotations)
     }
     
@@ -94,11 +91,9 @@ class DispensaryManager {
         
         for dispensary in dispensaries {
             let fullAddress = "\(dispensary.address), \(dispensary.city), \(dispensary.zipCode)"
-            print("Starting geocoding for: \(fullAddress)")
             if let numberPrefix = dispensary.name.split(separator: ".").first?.trimmingCharacters(in: .whitespaces) {
                 if let annotation = await self.geocodeAddress(dispensary: dispensary, fullAddress: fullAddress, idx: numberPrefix) {
                     annotations.append(annotation)
-                    print("Geocoding completed for: \(fullAddress) with result: \(annotation)")
                 }
             }
         }
@@ -108,9 +103,7 @@ class DispensaryManager {
     
     private func geocodeAddress(dispensary: Dispensary, fullAddress: String, idx: String) async -> DispensaryAnnotation? {
         do {
-            print("Attempting to geocode \(fullAddress)")
             let placemarks = try await geocoder.geocodeAddressString(fullAddress)
-            print("Got placemarks for address \(placemarks)")
             if let coordinate = placemarks.first?.location?.coordinate {
                 return DispensaryAnnotation(name: dispensary.name, address: fullAddress, coordinate: coordinate, idx: idx)
             }

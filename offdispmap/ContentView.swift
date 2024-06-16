@@ -8,6 +8,9 @@
 import SwiftUI
 import MapKit
 
+
+
+@MainActor
 struct ContentView: View {
     @StateObject private var mapViewModel = MapViewModel()
     @State private var selectedAnnotation: DispensaryAnnotation?
@@ -37,20 +40,25 @@ struct ContentView: View {
             
             MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation)
             
-            // List to display dispensaries
             List(mapViewModel.allDispensaries, id: \.name) { dispensary in
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(dispensary.name).fontWeight(.bold)
-                    Text(dispensary.address)
-                    Text("\(dispensary.city), \(dispensary.zipCode)")
-                    Text(dispensary.website).foregroundColor(.blue)
-                        .onTapGesture {
-                            // Handling of tap on website link if needed
-                        }
+                HStack() {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(dispensary.name).fontWeight(.bold)
+                        Text(dispensary.address)
+                        Text("\(dispensary.city), \(dispensary.zipCode)")
+                        Link(dispensary.website, destination: URL(string: dispensary.website)!)
+                            .foregroundColor(.blue)
+                    }
+                    Spacer()
+                    Button(action: {
+                        print("Navigate to \(dispensary.name)")
+                        selectDispensary(dispensary)
+                    }) {
+                        Image(systemName: "location.magnifyingglass")
+                            .foregroundColor(.blue)
+                    }
                 }
-                .onTapGesture {
-                    selectDispensary(dispensary)
-                }
+
             }
         }
         .padding()
