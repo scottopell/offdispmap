@@ -7,3 +7,5 @@ at https://cannabis.ny.gov/dispensary-location-verification
 This app parses that data and plots it on a map.
 
 So you can look at it
+
+![./screenshot.png](./screenshot.png)
