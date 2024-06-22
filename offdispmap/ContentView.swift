@@ -16,27 +16,49 @@ struct ContentView: View {
     @State private var hasFetched = false
     @State private var isFetching = false
     @State private var nycOnlyMode = true
+    @State private var selectedTab = "map"
 
     var body: some View {
-        VStack(spacing: 20) {
-            headerView
-            statisticsView
-            if isFetching {
-                fetchingDataView
-                Spacer()
-            } else {
-                controlsView
-                mapView
-                selectedDispensaryView
-                dispensaryListView
+        TabView(selection: $selectedTab) {
+            VStack(spacing: 20) {
+                headerView
+                statisticsView
+                if isFetching {
+                    fetchingDataView
+                    Spacer()
+                } else {
+                    controlsView
+                    mapView
+                    selectedDispensaryView
+                }
             }
+            .padding()
+            .tabItem {
+                Label("Map", systemImage: "map")
+            }
+            .tag("map")
+
+            VStack(spacing: 20) {
+                headerView
+                statisticsView
+                if isFetching {
+                    fetchingDataView
+                    Spacer()
+                } else {
+                    controlsView
+                    dispensaryListView
+                }
+            }
+            .padding()
+            .tabItem {
+                Label("List", systemImage: "list.bullet")
+            }
+            .tag("list")
         }
-        .padding()
         .onAppear {
             fetchDataIfNeeded()
         }
     }
-
     private var headerView: some View {
         Text("NY Dispensaries")
             .font(.title)
@@ -86,8 +108,8 @@ struct ContentView: View {
     }
 
     private var dispensaryListView: some View {
-        List(filteredDispensaries.filter { $0 != selectedDispensary }, id: \.name) { dispensary in
-            DispensaryRow(dispensary: dispensary) {
+        List(filteredDispensaries, id: \.name) { dispensary in
+            DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary) {
                 selectDispensary(dispensary)
             }
         }
@@ -161,6 +183,7 @@ struct ContentView: View {
             await mapViewModel.loadCoordinates(dispensary: dispensary)
             if let annotation = mapViewModel.dispensaryAnnotations.first(where: { $0.dispensary == dispensary }) {
                 selectedAnnotation = annotation
+                selectedTab = "map"
             }
         }
     }
