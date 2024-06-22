@@ -11,6 +11,7 @@ import SwiftUI
 struct DispensaryRow: View {
     var dispensary: Dispensary
     var isSelected: Bool = false
+    var canClick: Bool
     var onSelect: () -> Void
 
     var body: some View {
@@ -19,8 +20,12 @@ struct DispensaryRow: View {
                 Text(dispensary.name).fontWeight(.bold)
                 Text(dispensary.address)
                 Text("\(dispensary.city), \(dispensary.zipCode)")
-                Link(dispensary.website, destination: URL(string: dispensary.website)!)
-                    .foregroundColor(.blue)
+                if canClick, let url = dispensary.url {
+                    Link(dispensary.website, destination: url)
+                        .foregroundColor(.blue)
+                } else {
+                    Text(dispensary.website).foregroundColor(.gray)
+                }
             }
             Spacer()
             Button(action: {

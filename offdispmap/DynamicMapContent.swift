@@ -19,17 +19,19 @@ class Dispensary: NSObject {
     var city: String
     var zipCode: String
     var website: String
+    var url: URL?
     var fullAddress: String
     var coordinate: CLLocationCoordinate2D?
     var isTemporaryDeliveryOnly: Bool
 
     
-    init(name: String, address: String, city: String, zipCode: String, website: String, isTemporaryDeliveryOnly: Bool, coordinate: CLLocationCoordinate2D?) {
+    init(name: String, address: String, city: String, zipCode: String, website: String, url: URL?, isTemporaryDeliveryOnly: Bool, coordinate: CLLocationCoordinate2D?) {
         self.name = name
         self.address = address
         self.city = city
         self.zipCode = zipCode
         self.website = website
+        self.url = url
         self.isTemporaryDeliveryOnly = isTemporaryDeliveryOnly
         self.coordinate = coordinate
         self.fullAddress = "\(address), \(city), \(zipCode)"
@@ -43,6 +45,7 @@ class Dispensary: NSObject {
             city: "\(city)",
             zipCode: "\(zipCode)",
             website: "\(website)",
+            url: "\(url != nil ? "\(url!)" : "nil")",
             fullAddress: "\(fullAddress)",
             isTemporaryDeliveryOnly: \(isTemporaryDeliveryOnly),
             coordinate: \(coordinate.map { "(\($0.latitude), \($0.longitude))" } ?? "nil")
@@ -96,6 +99,30 @@ class DispensaryAnnotation: NSObject, MKAnnotation {
     }
 }
 
+func normalizeURL(from input: String) -> URL? {
+    var urlString = input.trimmingCharacters(in: .whitespacesAndNewlines)
+    
+    // Check if the input already has a scheme
+    if !urlString.hasPrefix("http://") && !urlString.hasPrefix("https://") {
+        urlString = "https://\(urlString)"
+    }
+    
+    // Attempt to create a URL, auto-encoding invalid characters if necessary
+    if let url = URL(string: urlString) {
+        return url
+    } else {
+        // Attempt to use URLComponents for further correction
+        if var components = URLComponents(string: urlString) {
+            if components.scheme == nil {
+                components.scheme = "https"
+            }
+            return components.url
+        }
+    }
+    
+    return nil
+}
+
 class DispensaryManager {
     var geocoder = CLGeocoder()
     
@@ -134,12 +161,15 @@ class DispensaryManager {
                         isTemporaryDeliveryOnly = true
                     }
                     
+                    let url = normalizeURL(from: website)
+                    
                     let dispensary = Dispensary(
                         name: name,
                         address: address,
                         city: city,
                         zipCode: zipCode,
                         website: website,
+                        url: url,
                         isTemporaryDeliveryOnly: isTemporaryDeliveryOnly,
                         coordinate: nil
                     )
@@ -162,6 +192,7 @@ class DispensaryManager {
 class MapViewModel: ObservableObject {
     @Published var allDispensaries: [Dispensary] = []
     @Published var dispensaryAnnotations: [DispensaryAnnotation] = []
+    var captureGeocodeResults: Bool = false
     
     private var dispensaryManager = DispensaryManager()
     
@@ -173,7 +204,9 @@ class MapViewModel: ObservableObject {
                     populateAnnotation(for: dispensary)
                 }
             }
-            logCoordinates()
+            if captureGeocodeResults {
+                logCoordinates()
+            }
         } catch {
             print("Failed to load data: \(error)")
         }
@@ -201,7 +234,9 @@ class MapViewModel: ObservableObject {
             return
         }
         await dispensary.populateCoordinate()
-        logCoordinates()
+        if captureGeocodeResults {
+            logCoordinates()
+        }
 
         populateAnnotation(for: dispensary)
     }
