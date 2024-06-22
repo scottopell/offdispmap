@@ -17,6 +17,8 @@ struct MapView: UIViewRepresentable {
     @Binding var annotations: [DispensaryAnnotation]
     @Binding var selectedAnnotation: DispensaryAnnotation?
     @Binding var nycOnlyMode: Bool
+    var onAnnotationSelect: ((DispensaryAnnotation) -> Void)? // Callback closure
+
     let nyc = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060), // Default to NYC
         latitudinalMeters: 10000,
@@ -108,6 +110,11 @@ struct MapView: UIViewRepresentable {
             return annotationView
         }
         
-        
+        func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+            if let annotation = view.annotation as? DispensaryAnnotation {
+                parent.selectedAnnotation = annotation
+                parent.onAnnotationSelect?(annotation) // Trigger the callback
+            }
+        }
     }
 }

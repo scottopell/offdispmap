@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var hasFetched = false
     @State private var isFetching = false
     @State private var nycOnlyMode = true
+    @State private var deliveryOnlyMode = false
     @State private var selectedTab = "map"
 
     var body: some View {
@@ -27,7 +28,6 @@ struct ContentView: View {
                     fetchingDataView
                     Spacer()
                 } else {
-                    controlsView
                     mapView
                     selectedDispensaryView
                 }
@@ -45,7 +45,6 @@ struct ContentView: View {
                     fetchingDataView
                     Spacer()
                 } else {
-                    controlsView
                     dispensaryListView
                 }
             }
@@ -54,23 +53,35 @@ struct ContentView: View {
                 Label("List", systemImage: "list.bullet")
             }
             .tag("list")
+            
+            VStack(spacing: 20) {
+                headerView
+                settingsView
+            }
+            .padding()
+            .tabItem {
+                Label("Settings", systemImage: "gear")
+            }
+            .tag("settings")
         }
         .onAppear {
             fetchDataIfNeeded()
         }
     }
     private var headerView: some View {
-        Text("NY Dispensaries")
+        let place = nycOnlyMode ? "NYC" : "NY"
+        return Text(place + " Dispensaries")
             .font(.title)
             .fontWeight(.bold)
     }
 
     private var statisticsView: some View {
         HStack {
-            Text("Total: \(dispCounts.all)")
-            Text("Delivery-Only: \(dispCounts.deliveryOnly)")
             Text("NYC Area: \(dispCounts.nycArea)")
-            Text("Location-Less: \(dispCounts.locationLess)")
+            Spacer()
+            Text("Delivery-Only: \(dispCounts.deliveryOnly)")
+            Spacer()
+            Text("Total: \(dispCounts.all)")
         }
     }
 
@@ -82,7 +93,7 @@ struct ContentView: View {
         HStack {
             if dispCounts.locationLess > 0 {
                 Button(action: loadMissingCoordinates) {
-                    Text("Load missing coordinates")
+                    Text("Load missing location data")
                 }
             }
             Toggle(isOn: $nycOnlyMode) {
@@ -93,7 +104,9 @@ struct ContentView: View {
     }
 
     private var mapView: some View {
-        MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, nycOnlyMode: $nycOnlyMode)
+        MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, nycOnlyMode: $nycOnlyMode,            onAnnotationSelect: { annotation in
+            selectDispensary(annotation.dispensary)
+        })
     }
 
     private var selectedDispensaryView: some View {
@@ -108,10 +121,29 @@ struct ContentView: View {
     }
 
     private var dispensaryListView: some View {
-        List(filteredDispensaries, id: \.name) { dispensary in
-            DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary) {
-                selectDispensary(dispensary)
+        VStack {
+            Toggle(isOn: $deliveryOnlyMode) {
+                Text("Delivery-Only")
             }
+            .padding()
+            List(deliveryOnlyMode ? mapViewModel.allDispensaries.filter { $0.isTemporaryDeliveryOnly } : filteredDispensaries, id: \.name) { dispensary in
+                DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary) {
+                    selectDispensary(dispensary)
+                }
+            }
+        }
+    }
+    
+    private var settingsView: some View {
+        VStack {
+            HStack {
+                Text("Total: \(dispCounts.all)")
+                Text("Delivery-Only: \(dispCounts.deliveryOnly)")
+                Text("NYC Area: \(dispCounts.nycArea)")
+                Text("Location-Less: \(dispCounts.locationLess)")
+            }
+            controlsView
+            Spacer()
         }
     }
     
