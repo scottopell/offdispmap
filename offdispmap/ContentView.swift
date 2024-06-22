@@ -8,6 +8,24 @@ struct DispensaryCounts {
     var nycArea: Int
 }
 
+struct WarningNotice: View {
+    let warningMsg: String
+    var body: some View {
+        HStack {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.yellow)
+                .imageScale(.large)
+            Text(warningMsg)
+                .foregroundColor(.primary)
+                .font(.body)
+        }
+        .padding()
+        .background(Color(UIColor.systemBackground).opacity(0.9))
+        .cornerRadius(8)
+        .shadow(radius: 2)
+    }
+}
+
 @MainActor
 struct ContentView: View {
     @StateObject private var mapViewModel = MapViewModel()
@@ -126,6 +144,9 @@ struct ContentView: View {
                 Text("Delivery-Only")
             }
             .padding()
+            if deliveryOnlyMode {
+                WarningNotice(warningMsg: "Who knows where these places deliver to? Just because its listed here doesn't mean it delivers to you. Duh.")
+            }
             List(deliveryOnlyMode ? mapViewModel.allDispensaries.filter { $0.isTemporaryDeliveryOnly } : filteredDispensaries, id: \.name) { dispensary in
                 DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary) {
                     selectDispensary(dispensary)
