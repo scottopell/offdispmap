@@ -16,68 +16,94 @@ struct ContentView: View {
     @State private var hasFetched = false
     @State private var isFetching = false
     @State private var nycOnlyMode = true
-    
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("NY Dispensaries")
-                .font(.title)
-                .fontWeight(.bold)
-            VStack {
-               Text("Total Dispensaries: \(dispCounts.all)")
-               Text("Location-Less Dispensaries: \(dispCounts.locationLess)")
-               Text("Delivery-Only Dispensaries: \(dispCounts.deliveryOnly)")
-               Text("NYC Area Dispensaries: \(dispCounts.nycArea)")
-           }
+            headerView
+            statisticsView
             if isFetching {
-                Text("Loading data from https://cannabis.ny.gov/dispensary-location-verification...")
+                fetchingDataView
+                Spacer()
+            } else {
+                controlsView
+                mapView
+                selectedDispensaryView
+                dispensaryListView
             }
-            
-            HStack {
-                if dispCounts.locationLess > 0 {
-                    Button {
-                        Task {
-                            if let disp = await loadLocations(n: 1) {
-                                selectDispensary(disp)
-                            }
-                        }
-                    } label: {
-                        Text("Load missing coordinates")
-                    }
-                }
+        }
+        .padding()
+        .onAppear {
+            fetchDataIfNeeded()
+        }
+    }
 
-                Toggle(isOn: $nycOnlyMode) {
-                    Text("NYC-only")
-                }
-                .padding()
-            }
+    private var headerView: some View {
+        Text("NY Dispensaries")
+            .font(.title)
+            .fontWeight(.bold)
+    }
 
-            MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, nycOnlyMode: $nycOnlyMode).onAppear {
-                Task {
-                    if !hasFetched {
-                        isFetching = true
-                        await mapViewModel.loadData()
-                        hasFetched = true
-                        isFetching = false
-                    }
+    private var statisticsView: some View {
+        HStack {
+            Text("Total: \(dispCounts.all)")
+            Text("Delivery-Only: \(dispCounts.deliveryOnly)")
+            Text("NYC Area: \(dispCounts.nycArea)")
+            Text("Location-Less: \(dispCounts.locationLess)")
+        }
+    }
+
+    private var fetchingDataView: some View {
+        Text("Loading data from https://cannabis.ny.gov/dispensary-location-verification...")
+    }
+
+    private var controlsView: some View {
+        HStack {
+            if dispCounts.locationLess > 0 {
+                Button(action: loadMissingCoordinates) {
+                    Text("Load missing coordinates")
                 }
             }
-            
+            Toggle(isOn: $nycOnlyMode) {
+                Text("NYC-only")
+            }
+            .padding()
+        }
+    }
+
+    private var mapView: some View {
+        MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, nycOnlyMode: $nycOnlyMode)
+    }
+
+    private var selectedDispensaryView: some View {
+        Group {
             if let currentlySelectedDispensary = selectedDispensary {
                 DispensaryRow(dispensary: currentlySelectedDispensary, isSelected: true) {
                     selectedDispensary = nil
                     selectedAnnotation = nil
                 }
             }
-            List(filteredDispensaries.filter { $0 != selectedDispensary }, id: \.name) { dispensary in
-                DispensaryRow(dispensary: dispensary) {
-                    selectDispensary(dispensary)
-                }
+        }
+    }
+
+    private var dispensaryListView: some View {
+        List(filteredDispensaries.filter { $0 != selectedDispensary }, id: \.name) { dispensary in
+            DispensaryRow(dispensary: dispensary) {
+                selectDispensary(dispensary)
             }
         }
-        .padding()
     }
     
+    private func fetchDataIfNeeded() {
+        if hasFetched {
+            return
+        }
+        isFetching = true
+        Task {
+            await mapViewModel.loadData()
+            hasFetched = true
+            isFetching = false
+        }
+    }
     
     var dispCounts: DispensaryCounts {
         let nycZipCodes = DispensaryData.shared.nycZipCodes
@@ -93,6 +119,14 @@ struct ContentView: View {
             deliveryOnly: deliveryOnlyCount,
             nycArea: nycAreaCount
         )
+    }
+    
+    private func loadMissingCoordinates() {
+        Task {
+            if let disp = await loadLocations(n: 1) {
+                selectDispensary(disp)
+            }
+        }
     }
     
     private func loadLocations(n: Int) async -> Dispensary? {

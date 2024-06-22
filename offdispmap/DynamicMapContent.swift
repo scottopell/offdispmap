@@ -170,10 +170,10 @@ class MapViewModel: ObservableObject {
             allDispensaries = try await dispensaryManager.fetchAndPrepareDispensaryData()
             for dispensary in allDispensaries {
                 if dispensary.coordinate != nil {
-                    Logger.info("Dispensary \(dispensary) has a coordinate, lets put an annotation for it")
                     populateAnnotation(for: dispensary)
                 }
             }
+            logCoordinates()
         } catch {
             print("Failed to load data: \(error)")
         }

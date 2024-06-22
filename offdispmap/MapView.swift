@@ -102,6 +102,7 @@ struct MapView: UIViewRepresentable {
             annotationView.markerTintColor = .blue  // Set the marker tint color to blue
             
             annotationView.glyphText = annotation.title
+            annotationView.clusteringIdentifier = "dispensary"
             
             
             return annotationView
