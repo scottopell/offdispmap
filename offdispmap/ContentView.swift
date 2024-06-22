@@ -9,6 +9,19 @@ struct ContentView: View {
     @State private var hasFetched = false
     @State private var isFetching = false
     @State private var nycOnlyMode = true
+    
+    private func loadLocations(n: Int) async -> Dispensary? {
+        var lastLoaded: Dispensary?
+        for _ in 0..<n {
+            if let locationlessDispensary = mapViewModel.allDispensaries.first(where: { $0.isTemporaryDeliveryOnly == false && $0.coordinate == nil }) {
+                Logger.info("Loading coordinates for \(locationlessDispensary)")
+                // Use the wrapped value to load coordinates
+                await mapViewModel.loadCoordinates(dispensary: locationlessDispensary)
+                lastLoaded = locationlessDispensary
+            }
+        }
+        return lastLoaded
+    }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -33,13 +46,34 @@ struct ContentView: View {
                             .cornerRadius(8)
                     }
                 }
+                Button {
+                    Task {
+                        Logger.info("Doing 1 geocode")
+                        if let disp = await loadLocations(n: 1) {
+                            selectDispensary(disp)
+                        }
+                    }
+                } label: {
+                    Text("Load 1")
+                }
+                Button {
+                    Task {
+                        Logger.info("Doing 5 geocode")
+                        if let disp = await loadLocations(n: 5) {
+                            selectDispensary(disp)
+                        }
+                    }
+                } label: {
+                    Text("Load 5")
+                }
+
                 Toggle(isOn: $nycOnlyMode) {
                     Text("NYC-only")
                 }
                 .padding()
             }
 
-            MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation)
+            MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, nycOnlyMode: $nycOnlyMode)
             
             if let currentlySelectedDispensary = selectedDispensary {
                 DispensaryRow(dispensary: currentlySelectedDispensary, isSelected: true) {
@@ -55,7 +89,7 @@ struct ContentView: View {
         }
         .padding()
     }
-    
+
     private var filteredDispensaries: [Dispensary] {
         if nycOnlyMode {
             return mapViewModel.allDispensaries.filter { DispensaryData.shared.nycZipCodes.contains($0.zipCode) }
@@ -65,6 +99,11 @@ struct ContentView: View {
     }
 
     private func selectDispensary(_ dispensary: Dispensary) {
+        if nycOnlyMode {
+            if !DispensaryData.shared.nycZipCodes.contains(dispensary.zipCode) {
+                return
+            }
+        }
         selectedDispensary = dispensary
         Task {
             await mapViewModel.loadCoordinates(dispensary: dispensary)

@@ -54,7 +54,7 @@ class Dispensary: NSObject {
         if self.coordinate != nil {
             return;
         }
-        if let coordinate = DispensaryData.shared.getCoordinate(for: self.name) {
+        if let coordinate = DispensaryData.shared.getCoordinate(for: self.fullAddress) {
             self.coordinate = coordinate
         } else {
             // Fallback to geocoding if not found in lookup table
@@ -143,6 +143,8 @@ class DispensaryManager {
                         isTemporaryDeliveryOnly: isTemporaryDeliveryOnly,
                         coordinate: nil
                     )
+                    dispensary.coordinate = DispensaryData.shared.getCoordinate(for: dispensary.fullAddress)
+
                     Logger.info("Parsed dispensary and here it is \(dispensary)")
                     dispensaries.append(dispensary)
                 }
@@ -166,6 +168,12 @@ class MapViewModel: ObservableObject {
     func loadData() async {
         do {
             allDispensaries = try await dispensaryManager.fetchAndPrepareDispensaryData()
+            for dispensary in allDispensaries {
+                if dispensary.coordinate != nil {
+                    Logger.info("Dispensary \(dispensary) has a coordinate, lets put an annotation for it")
+                    populateAnnotation(for: dispensary)
+                }
+            }
         } catch {
             print("Failed to load data: \(error)")
         }
@@ -174,23 +182,27 @@ class MapViewModel: ObservableObject {
         print("let dispensaryCoordinates: [String: CLLocationCoordinate2D] = [")
         for dispensary in allDispensaries {
             if let coordinate = dispensary.coordinate {
-                print("    \"\(dispensary.name)\": CLLocationCoordinate2D(latitude: \(coordinate.latitude), longitude: \(coordinate.longitude)),")
+                print("    \"\(dispensary.fullAddress)\": CLLocationCoordinate2D(latitude: \(coordinate.latitude), longitude: \(coordinate.longitude)),")
             }
         }
         print("]")
     }
     
+    func populateAnnotation(for dispensary: Dispensary) {
+         if let annotation = dispensary.getAnnotation() {
+            dispensaryAnnotations.append(annotation)
+        } else {
+            print("Was asked to load the annotation for dispensary \(dispensary.name) but couldn't do it")
+        }
+    }
+    
     func loadCoordinates(dispensary: Dispensary) async {
-        if dispensary.coordinate != nil {
+        if dispensary.isTemporaryDeliveryOnly || dispensary.coordinate != nil {
             return
         }
         await dispensary.populateCoordinate()
         logCoordinates()
 
-        if let annotation = dispensary.getAnnotation() {
-            dispensaryAnnotations.append(annotation)
-        } else {
-            print("Was asked to load the annotation for dispensary \(dispensary.name) but couldn't do it")
-        }
+        populateAnnotation(for: dispensary)
     }
 }

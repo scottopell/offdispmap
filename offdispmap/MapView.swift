@@ -16,6 +16,7 @@ import MapKit
 struct MapView: UIViewRepresentable {
     @Binding var annotations: [DispensaryAnnotation]
     @Binding var selectedAnnotation: DispensaryAnnotation?
+    @Binding var nycOnlyMode: Bool
     let nyc = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060), // Default to NYC
         latitudinalMeters: 10000,
@@ -37,9 +38,10 @@ struct MapView: UIViewRepresentable {
     func updateUIView(_ uiView: MKMapView, context: Context) {
         // Remove all existing annotations to prevent duplicates
         uiView.removeAnnotations(uiView.annotations)
+        let displayAnnotations = nycOnlyMode ? annotations.filter { DispensaryData.shared.nycZipCodes.contains($0.dispensary.zipCode) } : annotations
         
         // Add new annotations from the annotations binding
-        uiView.addAnnotations(annotations)
+        uiView.addAnnotations(displayAnnotations)
         if let selectedAnnotation = selectedAnnotation {
             let region = MKCoordinateRegion(center: selectedAnnotation.coordinate, latitudinalMeters: 500, longitudinalMeters: 500)
             uiView.setRegion(region, animated: true)
