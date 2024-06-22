@@ -99,11 +99,7 @@ struct MapView: UIViewRepresentable {
             // Optionally, set a simple glyph (text) or color if needed
             annotationView.markerTintColor = .blue  // Set the marker tint color to blue
             
-            if let idx = annotation.idx {
-                annotationView.glyphText = String(idx)  // Ensuring it's treated as a String
-            } else {
-                annotationView.glyphText = "?"  // Default value if index isn't set
-            }
+            annotationView.glyphText = annotation.title
             
             
             return annotationView

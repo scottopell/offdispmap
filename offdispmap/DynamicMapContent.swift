@@ -20,43 +20,63 @@ class Dispensary: NSObject {
     var zipCode: String
     var website: String
     var fullAddress: String
-    var idx: String?
     var coordinate: CLLocationCoordinate2D?
+    var isTemporaryDeliveryOnly: Bool
+
     
-    init(name: String, address: String, city: String, zipCode: String, website: String, idx: String?, coordinate: CLLocationCoordinate2D?) {
+    init(name: String, address: String, city: String, zipCode: String, website: String, isTemporaryDeliveryOnly: Bool, coordinate: CLLocationCoordinate2D?) {
         self.name = name
         self.address = address
         self.city = city
         self.zipCode = zipCode
         self.website = website
+        self.isTemporaryDeliveryOnly = isTemporaryDeliveryOnly
         self.coordinate = coordinate
         self.fullAddress = "\(address), \(city), \(zipCode)"
-
-        // todo move parsing idx logic into here and remove idx prefix from name
-        self.idx = idx
+    }
+    // Implementation of CustomStringConvertible
+    override var description: String {
+        return """
+        Dispensary(
+            name: "\(name)",
+            address: "\(address)",
+            city: "\(city)",
+            zipCode: "\(zipCode)",
+            website: "\(website)",
+            fullAddress: "\(fullAddress)",
+            isTemporaryDeliveryOnly: \(isTemporaryDeliveryOnly),
+            coordinate: \(coordinate.map { "(\($0.latitude), \($0.longitude))" } ?? "nil")
+        )
+        """
     }
     
     func populateCoordinate() async {
         if self.coordinate != nil {
             return;
         }
-        do {
-            let geocoder = CLGeocoder()
-            let placemarks = try await geocoder.geocodeAddressString(self.fullAddress)
-            if let coordinate = placemarks.first?.location?.coordinate {
-                self.coordinate = coordinate;
+        if let coordinate = DispensaryData.shared.getCoordinate(for: self.name) {
+            self.coordinate = coordinate
+        } else {
+            // Fallback to geocoding if not found in lookup table
+            do {
+                let geocoder = CLGeocoder()
+                let placemarks = try await geocoder.geocodeAddressString(self.fullAddress)
+                if let coordinate = placemarks.first?.location?.coordinate {
+                    self.coordinate = coordinate
+                }
+            } catch {
+                print("Geocoding failed with error: \(error.localizedDescription)")
             }
-        } catch {
-            print("Geocoding failed with error: \(error.localizedDescription)")
         }
     }
+    
     func getAnnotation() -> DispensaryAnnotation? {
         guard let coordinate = self.coordinate else {
             print("Can't get annotation, coordinate is nil")
             return nil
         }
 
-        return DispensaryAnnotation(dispensary: self, name: self.name, address: self.fullAddress, coordinate: coordinate, idx: self.idx)
+        return DispensaryAnnotation(dispensary: self, name: self.name, address: self.fullAddress, coordinate: coordinate)
     }
 }
 
@@ -67,14 +87,12 @@ class DispensaryAnnotation: NSObject, MKAnnotation {
     var coordinate: CLLocationCoordinate2D
     var title: String?
     var subtitle: String?
-    var idx: String?
     
-    init(dispensary: Dispensary, name: String, address: String, coordinate: CLLocationCoordinate2D, idx: String?) {
+    init(dispensary: Dispensary, name: String, address: String, coordinate: CLLocationCoordinate2D) {
         self.dispensary = dispensary
         self.title = name
         self.subtitle = address
         self.coordinate = coordinate
-        self.idx = idx
     }
 }
 
@@ -104,15 +122,17 @@ class DispensaryManager {
             for row in rows {
                 let columns = try row.select("td")
                 if columns.size() >= 5 {
-                    let name = try columns.get(0).text()
-                    let address = try columns.get(1).text()
-                    let city = try columns.get(2).text()
-                    let zipCode = try columns.get(3).text()
-                    let website = try columns.get(4).text()
-                    let numberPrefix = name.split(separator: ".").first?.trimmingCharacters(in: .whitespaces)
+                    var name = try columns.get(0).text().trimmingCharacters(in: .whitespacesAndNewlines)
+                    let address = try columns.get(1).text().trimmingCharacters(in: .whitespacesAndNewlines)
+                    let city = try columns.get(2).text().trimmingCharacters(in: .whitespacesAndNewlines)
+                    let zipCode = try columns.get(3).text().trimmingCharacters(in: .whitespacesAndNewlines)
+                    let website = try columns.get(4).text().trimmingCharacters(in: .whitespacesAndNewlines)
                     
-                    // todo handle ***ATTENTION: This is a Temporary Delivery Only Location. No in-person or pre-order sales are allowed at this location. For a list of areas that are available for delivery, please check the licensee's website directly.***
-                    // eg 22. EK Green LLC (dba Canterra)***    -    Tonawanda    -
+                    var isTemporaryDeliveryOnly = false
+                    if name.hasSuffix("***") {
+                        name = name.replacingOccurrences(of: "***", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                        isTemporaryDeliveryOnly = true
+                    }
                     
                     let dispensary = Dispensary(
                         name: name,
@@ -120,9 +140,10 @@ class DispensaryManager {
                         city: city,
                         zipCode: zipCode,
                         website: website,
-                        idx: numberPrefix,
+                        isTemporaryDeliveryOnly: isTemporaryDeliveryOnly,
                         coordinate: nil
                     )
+                    Logger.info("Parsed dispensary and here it is \(dispensary)")
                     dispensaries.append(dispensary)
                 }
             }
@@ -133,6 +154,7 @@ class DispensaryManager {
         }
     }
 }
+
 
 @MainActor
 class MapViewModel: ObservableObject {
@@ -148,12 +170,22 @@ class MapViewModel: ObservableObject {
             print("Failed to load data: \(error)")
         }
     }
+    func logCoordinates() {
+        print("let dispensaryCoordinates: [String: CLLocationCoordinate2D] = [")
+        for dispensary in allDispensaries {
+            if let coordinate = dispensary.coordinate {
+                print("    \"\(dispensary.name)\": CLLocationCoordinate2D(latitude: \(coordinate.latitude), longitude: \(coordinate.longitude)),")
+            }
+        }
+        print("]")
+    }
     
     func loadCoordinates(dispensary: Dispensary) async {
         if dispensary.coordinate != nil {
             return
         }
         await dispensary.populateCoordinate()
+        logCoordinates()
 
         if let annotation = dispensary.getAnnotation() {
             dispensaryAnnotations.append(annotation)
