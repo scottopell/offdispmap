@@ -1,6 +1,13 @@
 import SwiftUI
 import MapKit
 
+struct DispensaryCounts {
+    var all: Int
+    var locationLess: Int
+    var deliveryOnly: Int
+    var nycArea: Int
+}
+
 @MainActor
 struct ContentView: View {
     @StateObject private var mapViewModel = MapViewModel()
@@ -10,61 +17,33 @@ struct ContentView: View {
     @State private var isFetching = false
     @State private var nycOnlyMode = true
     
-    private func loadLocations(n: Int) async -> Dispensary? {
-        var lastLoaded: Dispensary?
-        for _ in 0..<n {
-            if let locationlessDispensary = mapViewModel.allDispensaries.first(where: { $0.isTemporaryDeliveryOnly == false && $0.coordinate == nil }) {
-                Logger.info("Loading coordinates for \(locationlessDispensary)")
-                // Use the wrapped value to load coordinates
-                await mapViewModel.loadCoordinates(dispensary: locationlessDispensary)
-                lastLoaded = locationlessDispensary
-            }
-        }
-        return lastLoaded
-    }
 
     var body: some View {
         VStack(spacing: 20) {
             Text("NY Dispensaries")
                 .font(.title)
                 .fontWeight(.bold)
+            VStack {
+               Text("Total Dispensaries: \(dispCounts.all)")
+               Text("Location-Less Dispensaries: \(dispCounts.locationLess)")
+               Text("Delivery-Only Dispensaries: \(dispCounts.deliveryOnly)")
+               Text("NYC Area Dispensaries: \(dispCounts.nycArea)")
+           }
+            if isFetching {
+                Text("Loading data from https://cannabis.ny.gov/dispensary-location-verification...")
+            }
             
             HStack {
-                if !hasFetched {
-                    Button(action: {
+                if dispCounts.locationLess > 0 {
+                    Button {
                         Task {
-                            isFetching = true
-                            await mapViewModel.loadData()
-                            hasFetched = true
-                            isFetching = false
+                            if let disp = await loadLocations(n: 1) {
+                                selectDispensary(disp)
+                            }
                         }
-                    }) {
-                        Text(isFetching ? "Fetching..." : "Fetch Data")
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(isFetching ? Color.gray : Color.blue)
-                            .cornerRadius(8)
+                    } label: {
+                        Text("Load missing coordinates")
                     }
-                }
-                Button {
-                    Task {
-                        Logger.info("Doing 1 geocode")
-                        if let disp = await loadLocations(n: 1) {
-                            selectDispensary(disp)
-                        }
-                    }
-                } label: {
-                    Text("Load 1")
-                }
-                Button {
-                    Task {
-                        Logger.info("Doing 5 geocode")
-                        if let disp = await loadLocations(n: 5) {
-                            selectDispensary(disp)
-                        }
-                    }
-                } label: {
-                    Text("Load 5")
                 }
 
                 Toggle(isOn: $nycOnlyMode) {
@@ -73,7 +52,16 @@ struct ContentView: View {
                 .padding()
             }
 
-            MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, nycOnlyMode: $nycOnlyMode)
+            MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, nycOnlyMode: $nycOnlyMode).onAppear {
+                Task {
+                    if !hasFetched {
+                        isFetching = true
+                        await mapViewModel.loadData()
+                        hasFetched = true
+                        isFetching = false
+                    }
+                }
+            }
             
             if let currentlySelectedDispensary = selectedDispensary {
                 DispensaryRow(dispensary: currentlySelectedDispensary, isSelected: true) {
@@ -88,6 +76,36 @@ struct ContentView: View {
             }
         }
         .padding()
+    }
+    
+    
+    var dispCounts: DispensaryCounts {
+        let nycZipCodes = DispensaryData.shared.nycZipCodes
+        
+        let allCount = mapViewModel.allDispensaries.count
+        let locationLessCount = mapViewModel.allDispensaries.filter { !$0.isTemporaryDeliveryOnly && $0.coordinate == nil }.count
+        let deliveryOnlyCount = mapViewModel.allDispensaries.filter { $0.isTemporaryDeliveryOnly }.count
+        let nycAreaCount = mapViewModel.allDispensaries.filter { nycZipCodes.contains($0.zipCode) }.count
+        
+        return DispensaryCounts(
+            all: allCount,
+            locationLess: locationLessCount,
+            deliveryOnly: deliveryOnlyCount,
+            nycArea: nycAreaCount
+        )
+    }
+    
+    private func loadLocations(n: Int) async -> Dispensary? {
+        var lastLoaded: Dispensary?
+        for _ in 0..<n {
+            if let locationlessDispensary = mapViewModel.allDispensaries.first(where: { $0.isTemporaryDeliveryOnly == false && $0.coordinate == nil }) {
+                Logger.info("Loading coordinates for \(locationlessDispensary)")
+                // Use the wrapped value to load coordinates
+                await mapViewModel.loadCoordinates(dispensary: locationlessDispensary)
+                lastLoaded = locationlessDispensary
+            }
+        }
+        return lastLoaded
     }
 
     private var filteredDispensaries: [Dispensary] {
