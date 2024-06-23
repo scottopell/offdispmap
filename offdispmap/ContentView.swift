@@ -159,7 +159,7 @@ struct ContentView: View {
     private var selectedDispensaryView: some View {
         Group {
             if let currentlySelectedDispensary = selectedDispensary {
-                DispensaryRow(dispensary: currentlySelectedDispensary, isSelected: true, canClick: true) {
+                DispensaryRow(dispensary: currentlySelectedDispensary, isSelected: true) {
                     selectedDispensary = nil
                     selectedAnnotation = nil
                 }.padding(5)
@@ -176,7 +176,7 @@ struct ContentView: View {
                 WarningNotice(warningMsg: "Who knows where these places deliver to? Just because its listed here doesn't mean it delivers to you. Duh.")
             }
             List(deliveryOnlyMode ? mapViewModel.allDispensaries.filter { $0.isTemporaryDeliveryOnly } : filteredDispensaries, id: \.name) { dispensary in
-                DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary, canClick: deliveryOnlyMode ? true : false) {
+                DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary) {
                     selectDispensary(dispensary)
                 }
             }.listStyle(.plain)

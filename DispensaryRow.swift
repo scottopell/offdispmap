@@ -5,15 +5,33 @@
 //  Created by Scott Opell on 6/16/24.
 //
 
+import SwiftUI
+import SafariServices
+
+struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: UIViewControllerRepresentableContext<SafariView>) -> SFSafariViewController {
+        return SFSafariViewController(url: url)
+    }
+
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: UIViewControllerRepresentableContext<SafariView>) {
+        // No need to update anything here
+    }
+}
+
+
 import Foundation
 import SwiftUI
 
 struct DispensaryRow: View {
     var dispensary: Dispensary
     var isSelected: Bool = false
-    var canClick: Bool
     var onSelect: () -> Void
     
+    @State private var showingSafari = false
+    @State private var safariURL: URL?
+
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
@@ -28,28 +46,42 @@ struct DispensaryRow: View {
                         .foregroundColor(.green)
                     Text("\(dispensary.address), \(dispensary.city), \(dispensary.zipCode)")
                 }
-                if canClick, let url = dispensary.url {
-                    HStack {
-                        Image(systemName: "link")
+                HStack {
+                    Image(systemName: "link")
+                        .foregroundColor(.blue)
+                    if let url = dispensary.url {
+                        Text(dispensary.website)
                             .foregroundColor(.blue)
-                        Link(dispensary.website, destination: url)
-                            .foregroundColor(.blue)
-                    }
-                } else {
-                    HStack {
-                        Image(systemName: "link")
-                            .foregroundColor(.gray)
+                            .onTapGesture {
+                                Task {
+                                    safariURL = url
+                                    showingSafari = true
+                                }
+                            }
+                        .sheet(isPresented: $showingSafari) {
+                            if let url = safariURL {
+                                SafariView(url: url)
+                            }
+                        }
+                    } else {
                         Text(dispensary.website)
                             .foregroundColor(.gray)
                     }
                 }
+
             }
             Spacer()
-            Button(action: {
-                onSelect()
-            }) {
-                Image(systemName: isSelected ? "xmark.circle.fill" : "location.magnifyingglass")
-                    .foregroundColor(isSelected ? .red : .blue)
+            VStack {
+                Group {
+                    if isSelected {
+                        Image(systemName: "xmark.circle.fill").foregroundColor(.red)
+                    } else {
+                        Image(systemName: "location.magnifyingglass").foregroundColor(.blue)
+                    }
+                }
+                .onTapGesture {
+                    onSelect()
+                }
             }
         }
         .background(isSelected ? Color.gray.opacity(0.2) : Color.clear)
