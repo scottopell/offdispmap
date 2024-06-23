@@ -34,6 +34,16 @@ struct MapView: UIViewRepresentable {
         // This is just here in case something goes wrong
         mapView.setRegion(nyc, animated: false)
         
+        // Add user tracking button
+        let userTrackingButton = MKUserTrackingButton(mapView: mapView)
+        userTrackingButton.translatesAutoresizingMaskIntoConstraints = false
+        mapView.addSubview(userTrackingButton)
+        
+        NSLayoutConstraint.activate([
+            userTrackingButton.bottomAnchor.constraint(equalTo: mapView.bottomAnchor, constant: -10),
+            userTrackingButton.trailingAnchor.constraint(equalTo: mapView.trailingAnchor, constant: -10)
+        ])
+        
         return mapView
     }
     

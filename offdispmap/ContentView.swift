@@ -1,5 +1,32 @@
 import SwiftUI
 import MapKit
+import CoreLocation
+
+class LocationManager: NSObject, CLLocationManagerDelegate {
+    private let locationManager = CLLocationManager()
+    
+    override init() {
+        super.init()
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+        // Or, if you need always authorization
+        // locationManager.requestAlwaysAuthorization()
+    }
+    
+    // Handle the authorization status change
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        switch status {
+        case .authorizedWhenInUse, .authorizedAlways:
+            locationManager.startUpdatingLocation()
+        case .denied, .restricted:
+            // Handle denied or restricted status
+            break
+        default:
+            break
+        }
+    }
+}
+
 
 struct DispensaryCounts {
     var all: Int
@@ -82,6 +109,7 @@ struct ContentView: View {
             .tag("settings")
         }
         .onAppear {
+            let _ = LocationManager()
             fetchDataIfNeeded()
         }
     }
