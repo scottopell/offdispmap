@@ -97,7 +97,7 @@ struct ContentView: View {
         HStack {
             Text("NYC Area: \(dispCounts.nycArea)")
             Spacer()
-            Text("Delivery-Only: \(dispCounts.deliveryOnly)")
+            Text("Delivery Only: \(dispCounts.deliveryOnly)")
             Spacer()
             Text("Total: \(dispCounts.all)")
         }
@@ -115,14 +115,21 @@ struct ContentView: View {
                 }
             }
             Toggle(isOn: $nycOnlyMode) {
-                Text("NYC-only")
+                Text("NYC Mode")
             }
             .padding()
         }
     }
 
     private var mapView: some View {
-        MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, nycOnlyMode: $nycOnlyMode,            onAnnotationSelect: { annotation in
+        MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, annotationFilter: Binding(
+            get: {
+                { annotation in
+                    self.nycOnlyMode ? DispensaryData.shared.nycZipCodes.contains(annotation.dispensary.zipCode) : true
+                }
+            },
+            set: { _ in }
+        ),            onAnnotationSelect: { annotation in
             selectDispensary(annotation.dispensary)
         })
     }
@@ -141,7 +148,7 @@ struct ContentView: View {
     private var dispensaryListView: some View {
         VStack {
             Toggle(isOn: $deliveryOnlyMode) {
-                Text("Delivery-Only")
+                Text("Delivery Only")
             }
             .padding()
             if deliveryOnlyMode {
