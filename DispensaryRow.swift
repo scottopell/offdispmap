@@ -16,15 +16,32 @@ struct DispensaryRow: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(dispensary.name).fontWeight(.bold)
-                Text(dispensary.address)
-                Text("\(dispensary.city), \(dispensary.zipCode)")
-                if canClick, let url = dispensary.url {
-                    Link(dispensary.website, destination: url)
+            VStack(alignment: .leading) {
+                HStack {
+                    Image(systemName: "building.2")
                         .foregroundColor(.blue)
+                    Text(dispensary.name)
+                        .fontWeight(.bold)
+                }
+                HStack {
+                    Image(systemName: "map")
+                        .foregroundColor(.green)
+                    Text("\(dispensary.address), \(dispensary.city), \(dispensary.zipCode)")
+                }
+                if canClick, let url = dispensary.url {
+                    HStack {
+                        Image(systemName: "link")
+                            .foregroundColor(.blue)
+                        Link(dispensary.website, destination: url)
+                            .foregroundColor(.blue)
+                    }
                 } else {
-                    Text(dispensary.website).foregroundColor(.gray)
+                    HStack {
+                        Image(systemName: "link")
+                            .foregroundColor(.gray)
+                        Text(dispensary.website)
+                            .foregroundColor(.gray)
+                    }
                 }
             }
             Spacer()
@@ -37,6 +54,6 @@ struct DispensaryRow: View {
         }
         .background(isSelected ? Color.gray.opacity(0.2) : Color.clear)
         .cornerRadius(8)
-        .padding([.top, .bottom], 5)
     }
 }
+

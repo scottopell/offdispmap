@@ -162,7 +162,7 @@ struct ContentView: View {
                 DispensaryRow(dispensary: currentlySelectedDispensary, isSelected: true, canClick: true) {
                     selectedDispensary = nil
                     selectedAnnotation = nil
-                }
+                }.padding(5)
             }
         }
     }
@@ -172,7 +172,6 @@ struct ContentView: View {
             Toggle(isOn: $deliveryOnlyMode) {
                 Text("Delivery Only")
             }
-            .padding()
             if deliveryOnlyMode {
                 WarningNotice(warningMsg: "Who knows where these places deliver to? Just because its listed here doesn't mean it delivers to you. Duh.")
             }
@@ -180,7 +179,7 @@ struct ContentView: View {
                 DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary, canClick: false) {
                     selectDispensary(dispensary)
                 }
-            }
+            }.listStyle(.plain)
         }
     }
     
