@@ -13,7 +13,7 @@ struct DispensaryRow: View {
     var isSelected: Bool = false
     var canClick: Bool
     var onSelect: () -> Void
-
+    
     var body: some View {
         HStack {
             VStack(alignment: .leading) {
