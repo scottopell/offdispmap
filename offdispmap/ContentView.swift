@@ -3,7 +3,6 @@ import MapKit
 
 struct DispensaryCounts {
     var all: Int
-    var locationLess: Int
     var deliveryOnly: Int
     var nycArea: Int
 }
@@ -109,11 +108,6 @@ struct ContentView: View {
 
     private var controlsView: some View {
         HStack {
-            if dispCounts.locationLess > 0 {
-                Button(action: loadMissingCoordinates) {
-                    Text("Load missing location data")
-                }
-            }
             Toggle(isOn: $nycOnlyMode) {
                 Text("NYC Mode")
             }
@@ -166,9 +160,8 @@ struct ContentView: View {
         VStack {
             HStack {
                 Text("Total: \(dispCounts.all)")
-                Text("Delivery-Only: \(dispCounts.deliveryOnly)")
+                Text("Delivery Only: \(dispCounts.deliveryOnly)")
                 Text("NYC Area: \(dispCounts.nycArea)")
-                Text("Location-Less: \(dispCounts.locationLess)")
             }
             controlsView
             Spacer()
@@ -191,39 +184,16 @@ struct ContentView: View {
         let nycZipCodes = DispensaryData.shared.nycZipCodes
         
         let allCount = mapViewModel.allDispensaries.count
-        let locationLessCount = mapViewModel.allDispensaries.filter { !$0.isTemporaryDeliveryOnly && $0.coordinate == nil }.count
         let deliveryOnlyCount = mapViewModel.allDispensaries.filter { $0.isTemporaryDeliveryOnly }.count
         let nycAreaCount = mapViewModel.allDispensaries.filter { nycZipCodes.contains($0.zipCode) }.count
         
         return DispensaryCounts(
             all: allCount,
-            locationLess: locationLessCount,
             deliveryOnly: deliveryOnlyCount,
             nycArea: nycAreaCount
         )
     }
     
-    private func loadMissingCoordinates() {
-        Task {
-            if let disp = await loadLocations(n: 1) {
-                selectDispensary(disp)
-            }
-        }
-    }
-    
-    private func loadLocations(n: Int) async -> Dispensary? {
-        var lastLoaded: Dispensary?
-        for _ in 0..<n {
-            if let locationlessDispensary = mapViewModel.allDispensaries.first(where: { $0.isTemporaryDeliveryOnly == false && $0.coordinate == nil }) {
-                Logger.info("Loading coordinates for \(locationlessDispensary)")
-                // Use the wrapped value to load coordinates
-                await mapViewModel.loadCoordinates(dispensary: locationlessDispensary)
-                lastLoaded = locationlessDispensary
-            }
-        }
-        return lastLoaded
-    }
-
     private var filteredDispensaries: [Dispensary] {
         if nycOnlyMode {
             return mapViewModel.allDispensaries.filter { DispensaryData.shared.nycZipCodes.contains($0.zipCode) }
@@ -233,11 +203,6 @@ struct ContentView: View {
     }
 
     private func selectDispensary(_ dispensary: Dispensary) {
-        if nycOnlyMode {
-            if !DispensaryData.shared.nycZipCodes.contains(dispensary.zipCode) {
-                return
-            }
-        }
         selectedDispensary = dispensary
         Task {
             await mapViewModel.loadCoordinates(dispensary: dispensary)

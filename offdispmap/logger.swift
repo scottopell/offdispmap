@@ -11,9 +11,6 @@ import os.log
 struct Logger {
     private static let subsystem = Bundle.main.bundleIdentifier!
     static let `default` = OSLog(subsystem: subsystem, category: "Default")
-    static let ui = OSLog(subsystem: subsystem, category: "UI")
-    static let networking = OSLog(subsystem: subsystem, category: "Networking")
-    static let data = OSLog(subsystem: subsystem, category: "Data")
 
     static func debug(_ message: String, log: OSLog = Logger.default) {
         os_log(.debug, log: log, "%{public}@", message)
@@ -21,6 +18,10 @@ struct Logger {
 
     static func info(_ message: String, log: OSLog = Logger.default) {
         os_log(.info, log: log, "%{public}@", message)
+    }
+
+    static func `default`(_ message: String, log: OSLog = Logger.default) {
+        os_log(.default, log: log, "%{public}@", message)
     }
 
     static func error(_ message: String, log: OSLog = Logger.default) {

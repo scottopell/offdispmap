@@ -54,22 +54,20 @@ class Dispensary: NSObject {
     }
     
     func populateCoordinate() async {
-        if self.coordinate != nil {
+        guard self.coordinate == nil && self.isTemporaryDeliveryOnly == false  else {
             return;
         }
-        if let coordinate = DispensaryData.shared.getCoordinate(for: self.fullAddress) {
-            self.coordinate = coordinate
-        } else {
-            // Fallback to geocoding if not found in lookup table
-            do {
-                let geocoder = CLGeocoder()
-                let placemarks = try await geocoder.geocodeAddressString(self.fullAddress)
-                if let coordinate = placemarks.first?.location?.coordinate {
-                    self.coordinate = coordinate
-                }
-            } catch {
-                print("Geocoding failed with error: \(error.localizedDescription)")
+        do {
+            let geocoder = CLGeocoder()
+            Logger.info("Executing geocode for \(self.name) \"\(self.fullAddress)\"")
+            let placemarks = try await geocoder.geocodeAddressString(self.fullAddress)
+            if let coordinate = placemarks.first?.location?.coordinate {
+                Logger.info("Using first placemark \(placemarks.first)")
+                Logger.info("All placemarks found: \(placemarks)")
+                self.coordinate = coordinate
             }
+        } catch {
+            print("Geocoding failed with error: \(error.localizedDescription)")
         }
     }
     
@@ -136,6 +134,11 @@ class DispensaryManager {
             throw NSError(domain: "DataDecodingError", code: 1001, userInfo: [NSLocalizedDescriptionKey: "Failed to decode data into string"])
         }
         let dispensaries = parseHTMLContent(htmlString)
+        for dispensary in dispensaries {
+            if dispensary.coordinate == nil {
+                await dispensary.populateCoordinate()
+            }
+        }
         return dispensaries
     }
     
