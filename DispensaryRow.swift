@@ -24,12 +24,12 @@ struct SafariView: UIViewControllerRepresentable {
 import Foundation
 import SwiftUI
 
+@MainActor
 struct DispensaryRow: View {
     var dispensary: Dispensary
     var isSelected: Bool = false
     var onSelect: () -> Void
     
-    @State private var showingSafari = false
     @State private var safariURL: URL?
 
     var body: some View {
@@ -53,22 +53,14 @@ struct DispensaryRow: View {
                         Text(dispensary.website)
                             .foregroundColor(.blue)
                             .onTapGesture {
-                                Task {
-                                    safariURL = url
-                                    showingSafari = true
-                                }
+                                safariURL = url
                             }
-                        .sheet(isPresented: $showingSafari) {
-                            if let url = safariURL {
-                                SafariView(url: url)
-                            }
-                        }
                     } else {
                         Text(dispensary.website)
                             .foregroundColor(.gray)
                     }
                 }
-
+                
             }
             Spacer()
             VStack {
@@ -86,6 +78,20 @@ struct DispensaryRow: View {
         }
         .background(isSelected ? Color.gray.opacity(0.2) : Color.clear)
         .cornerRadius(8)
+        .sheet(isPresented: Binding<Bool>(
+            get: { safariURL != nil },
+            set: { newValue in
+                if !newValue {
+                    safariURL = nil
+                }
+            }
+        )) {
+            if let url = safariURL {
+                SafariView(url: url)
+            } else {
+                Text("No URL provided")
+            }
+        }
     }
 }
 
