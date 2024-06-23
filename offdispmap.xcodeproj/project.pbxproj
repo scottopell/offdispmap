@@ -17,7 +17,6 @@
 		471EBF1D2C1F370E0016E689 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 471EBF1C2C1F370E0016E689 /* SwiftSoup */; };
 		471EBF1F2C1F43780016E689 /* DynamicMapContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471EBF1E2C1F43780016E689 /* DynamicMapContent.swift */; };
 		471EBF212C1F48C00016E689 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471EBF202C1F48C00016E689 /* MapView.swift */; };
-		471EBF232C1F73180016E689 /* DispensaryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471EBF222C1F73180016E689 /* DispensaryManager.swift */; };
 		471EBF252C1F936E0016E689 /* DispensaryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471EBF242C1F936E0016E689 /* DispensaryRow.swift */; };
 		478CFA752C275729008C9CC5 /* DispensaryData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478CFA742C275729008C9CC5 /* DispensaryData.swift */; };
 		478CFA772C27597C008C9CC5 /* logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478CFA762C27597C008C9CC5 /* logger.swift */; };
@@ -53,7 +52,6 @@
 		470060A72C1F18C5008B3692 /* offdispmapUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = offdispmapUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		471EBF1E2C1F43780016E689 /* DynamicMapContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicMapContent.swift; sourceTree = "<group>"; };
 		471EBF202C1F48C00016E689 /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
-		471EBF222C1F73180016E689 /* DispensaryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispensaryManager.swift; sourceTree = "<group>"; };
 		471EBF242C1F936E0016E689 /* DispensaryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispensaryRow.swift; sourceTree = "<group>"; };
 		478CFA742C275729008C9CC5 /* DispensaryData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispensaryData.swift; sourceTree = "<group>"; };
 		478CFA762C27597C008C9CC5 /* logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = logger.swift; sourceTree = "<group>"; };
@@ -116,7 +114,6 @@
 				470060902C1F18C5008B3692 /* Preview Content */,
 				471EBF1E2C1F43780016E689 /* DynamicMapContent.swift */,
 				471EBF202C1F48C00016E689 /* MapView.swift */,
-				471EBF222C1F73180016E689 /* DispensaryManager.swift */,
 				478CFA762C27597C008C9CC5 /* logger.swift */,
 			);
 			path = offdispmap;
@@ -288,7 +285,6 @@
 				4700608B2C1F18C4008B3692 /* offdispmapApp.swift in Sources */,
 				471EBF1F2C1F43780016E689 /* DynamicMapContent.swift in Sources */,
 				471EBF252C1F936E0016E689 /* DispensaryRow.swift in Sources */,
-				471EBF232C1F73180016E689 /* DispensaryManager.swift in Sources */,
 				478CFA752C275729008C9CC5 /* DispensaryData.swift in Sources */,
 				478CFA772C27597C008C9CC5 /* logger.swift in Sources */,
 			);
