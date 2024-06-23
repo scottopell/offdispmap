@@ -62,7 +62,6 @@ class Dispensary: NSObject {
             Logger.info("Executing geocode for \(self.name) \"\(self.fullAddress)\"")
             let placemarks = try await geocoder.geocodeAddressString(self.fullAddress)
             if let coordinate = placemarks.first?.location?.coordinate {
-                Logger.info("Using first placemark \(placemarks.first)")
                 Logger.info("All placemarks found: \(placemarks)")
                 self.coordinate = coordinate
             }
@@ -80,8 +79,6 @@ class Dispensary: NSObject {
         return DispensaryAnnotation(dispensary: self, name: self.name, address: self.fullAddress, coordinate: coordinate)
     }
 }
-
-
 
 class DispensaryAnnotation: NSObject, MKAnnotation {
     var dispensary: Dispensary
