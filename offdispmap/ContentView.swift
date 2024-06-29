@@ -9,8 +9,6 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         super.init()
         locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
-        // Or, if you need always authorization
-        // locationManager.requestAlwaysAuthorization()
     }
     
     // Handle the authorization status change
@@ -62,6 +60,8 @@ struct ContentView: View {
     @State private var nycOnlyMode = true
     @State private var deliveryOnlyMode = false
     @State private var selectedTab = "map"
+    @State private var showDeveloperView = false
+
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -97,16 +97,9 @@ struct ContentView: View {
                 Label("List", systemImage: "list.bullet")
             }
             .tag("list")
-            
-            VStack(spacing: 20) {
-                headerView
-                settingsView
-            }
-            .padding()
-            .tabItem {
-                Label("Settings", systemImage: "gear")
-            }
-            .tag("settings")
+        }
+        .sheet(isPresented: $showDeveloperView) {
+            DeveloperView(mapViewModel: mapViewModel)
         }
         .onAppear {
             let _ = LocationManager()
@@ -127,6 +120,16 @@ struct ContentView: View {
             Text("Delivery Only: \(dispCounts.deliveryOnly)")
             Spacer()
             Text("Total: \(dispCounts.all)")
+            Spacer()
+            HStack {
+                Spacer()
+                Toggle(isOn: $nycOnlyMode) {
+                    Text("NYC Only")
+                }
+                Button(action: { showDeveloperView = true }) {
+                    Image(systemName: "hammer.fill")
+                }
+            }
         }
     }
 
@@ -134,20 +137,12 @@ struct ContentView: View {
         Text("Loading data from https://cannabis.ny.gov/dispensary-location-verification...")
     }
 
-    private var controlsView: some View {
-        HStack {
-            Toggle(isOn: $nycOnlyMode) {
-                Text("NYC Mode")
-            }
-            .padding()
-        }
-    }
-
     private var mapView: some View {
         MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, annotationFilter: Binding(
             get: {
                 { annotation in
-                    self.nycOnlyMode ? DispensaryData.shared.nycZipCodes.contains(annotation.dispensary.zipCode) : true
+                    self.nycOnlyMode ? mapViewModel.nycZipCodes.contains(annotation.dispensary.zipCode) : true
+
                 }
             },
             set: { _ in }
@@ -183,18 +178,6 @@ struct ContentView: View {
         }
     }
     
-    private var settingsView: some View {
-        VStack {
-            HStack {
-                Text("Total: \(dispCounts.all)")
-                Text("Delivery Only: \(dispCounts.deliveryOnly)")
-                Text("NYC Area: \(dispCounts.nycArea)")
-            }
-            controlsView
-            Spacer()
-        }
-    }
-    
     private func fetchDataIfNeeded() {
         if hasFetched {
             return
@@ -207,12 +190,10 @@ struct ContentView: View {
         }
     }
     
-    var dispCounts: DispensaryCounts {
-        let nycZipCodes = DispensaryData.shared.nycZipCodes
-        
+    var dispCounts: DispensaryCounts {        
         let allCount = mapViewModel.allDispensaries.count
         let deliveryOnlyCount = mapViewModel.allDispensaries.filter { $0.isTemporaryDeliveryOnly }.count
-        let nycAreaCount = mapViewModel.allDispensaries.filter { nycZipCodes.contains($0.zipCode) }.count
+        let nycAreaCount = filteredDispensaries.count
         
         return DispensaryCounts(
             all: allCount,
@@ -223,7 +204,7 @@ struct ContentView: View {
     
     private var filteredDispensaries: [Dispensary] {
         if nycOnlyMode {
-            return mapViewModel.allDispensaries.filter { DispensaryData.shared.nycZipCodes.contains($0.zipCode) }
+            return mapViewModel.allDispensaries.filter { mapViewModel.nycZipCodes.contains($0.zipCode) }
         } else {
             return mapViewModel.allDispensaries
         }

@@ -187,38 +187,141 @@ class DispensaryManager {
     }
 }
 
+struct USPSResponse: Codable {
+    let resultStatus: String
+    let city: String
+    let state: String
+    let zipList: [ZipCode]
+}
+
+struct ZipCode: Codable {
+    let zip5: String
+    let recordType: String?
+}
+
+enum FetchError: Error {
+    case invalidResponse
+    case networkError(Error)
+    case decodingError(Error)
+    case unexpectedStatus(String)
+}
+
+func fetchZipCodes(for city: String, state: String) async throws -> [ZipCode] {
+    let url = URL(string: "https://tools.usps.com/tools/app/ziplookup/zipByCityState")!
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+    request.setValue("application/json", forHTTPHeaderField: "Accept")
+    request.httpBody = "city=\(city.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? city)&state=\(state)".data(using: .utf8)
+
+    do {
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw FetchError.invalidResponse
+        }
+
+        let decoder = JSONDecoder()
+        let uspsResponse = try decoder.decode(USPSResponse.self, from: data)
+        
+        guard uspsResponse.resultStatus == "SUCCESS" else {
+            throw FetchError.unexpectedStatus(uspsResponse.resultStatus)
+        }
+        
+        return uspsResponse.zipList
+    } catch let error as DecodingError {
+        throw FetchError.decodingError(error)
+    } catch let error as FetchError {
+        throw error
+    } catch {
+        throw FetchError.networkError(error)
+    }
+}
+
+func fetchAllNYCZipCodes() async throws -> [String] {
+    let boroughs = [
+        ("Manhattan", "NY"),
+        ("Brooklyn", "NY"),
+        ("Queens", "NY"),
+        ("Bronx", "NY"),
+        ("Staten Island", "NY")
+    ]
+    
+    var allZipCodes: Set<String> = []
+    
+    for (borough, state) in boroughs {
+        do {
+            let zipCodes = try await fetchZipCodes(for: borough, state: state)
+            allZipCodes.formUnion(zipCodes.map { $0.zip5 })
+        } catch {
+            print("Error fetching zip codes for \(borough): \(error)")
+            // Continue with other boroughs even if one fails
+        }
+    }
+    
+    return Array(allZipCodes).sorted()
+}
+
 
 @MainActor
 class MapViewModel: ObservableObject {
     @Published var allDispensaries: [Dispensary] = []
     @Published var dispensaryAnnotations: [DispensaryAnnotation] = []
-    var captureGeocodeResults: Bool = false
+    @Published var nycZipCodes: Set<String> = []
+    @Published var errorMessage: String? = nil
     
     private var dispensaryManager = DispensaryManager()
     
     func loadData() async {
         do {
-            allDispensaries = try await dispensaryManager.fetchAndPrepareDispensaryData()
+            async let dispensariesTask = dispensaryManager.fetchAndPrepareDispensaryData()
+            async let zipCodesTask = fetchAllNYCZipCodes()
+            
+            let (fetchedDispensaries, fetchedZipCodes) = try await (dispensariesTask, zipCodesTask)
+            
+            allDispensaries = fetchedDispensaries
+            nycZipCodes = Set(fetchedZipCodes)
             for dispensary in allDispensaries {
                 if dispensary.coordinate != nil {
                     populateAnnotation(for: dispensary)
                 }
             }
-            if captureGeocodeResults {
-                logCoordinates()
-            }
         } catch {
-            print("Failed to load data: \(error)")
+            handleError(error)
         }
     }
-    func logCoordinates() {
-        print("let dispensaryCoordinates: [String: CLLocationCoordinate2D] = [")
+    
+    private func handleError(_ error: Error) {
+        if let fetchError = error as? FetchError {
+            switch fetchError {
+            case .invalidResponse:
+                errorMessage = "Invalid response from server"
+            case .networkError(let underlyingError):
+                errorMessage = "Network error: \(underlyingError.localizedDescription)"
+            case .decodingError(let underlyingError):
+                errorMessage = "Data decoding error: \(underlyingError.localizedDescription)"
+            case .unexpectedStatus(let status):
+                errorMessage = "Unexpected status: \(status)"
+            }
+        } else {
+            errorMessage = "An unknown error occurred: \(error.localizedDescription)"
+        }
+        
+        print("Failed to load data: \(errorMessage ?? "Unknown error")")
+    }
+
+    func logCoordinates(onlyNonCached: Bool) -> String {
+        var log = "let dispensaryCoordinates: [String: CLLocationCoordinate2D] = [\""
         for dispensary in allDispensaries {
             if let coordinate = dispensary.coordinate {
-                print("    \"\(dispensary.fullAddress)\": CLLocationCoordinate2D(latitude: \(coordinate.latitude), longitude: \(coordinate.longitude)),")
+                if !onlyNonCached || (onlyNonCached && DispensaryData.shared.getCoordinate(for: dispensary.fullAddress) == nil) {
+                    log += "\"\(dispensary.fullAddress)\": CLLocationCoordinate2D(latitude: \(coordinate.latitude), longitude: \(coordinate.longitude)),\n"
+                }
             }
         }
-        print("]")
+        log += "]"
+        return log
     }
     
     func populateAnnotation(for dispensary: Dispensary) {
@@ -234,9 +337,6 @@ class MapViewModel: ObservableObject {
             return
         }
         await dispensary.populateCoordinate()
-        if captureGeocodeResults {
-            logCoordinates()
-        }
 
         populateAnnotation(for: dispensary)
     }
