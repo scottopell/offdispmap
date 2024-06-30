@@ -67,12 +67,12 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             VStack(spacing: 20) {
                 headerView
-                statisticsView
                 if isFetching {
                     fetchingDataView
                     Spacer()
                 } else {
                     mapView
+                    statisticsView
                     selectedDispensaryView
                 }
             }
@@ -84,12 +84,12 @@ struct ContentView: View {
 
             VStack(spacing: 20) {
                 headerView
-                statisticsView
                 if isFetching {
                     fetchingDataView
                     Spacer()
                 } else {
                     dispensaryListView
+                    statisticsView
                 }
             }
             .padding()
@@ -112,26 +112,54 @@ struct ContentView: View {
             .font(.title)
             .fontWeight(.bold)
     }
+    
+    struct StatCard: View {
+        let label: String
+        let value: Int
 
-    private var statisticsView: some View {
-        HStack {
-            Text("NYC Area: \(dispCounts.nycArea)")
-            Spacer()
-            Text("Delivery Only: \(dispCounts.deliveryOnly)")
-            Spacer()
-            Text("Total: \(dispCounts.all)")
-            Spacer()
-            HStack {
-                Spacer()
-                Toggle(isOn: $nycOnlyMode) {
-                    Text("NYC Only")
-                }
-                Button(action: { showDeveloperView = true }) {
-                    Image(systemName: "hammer.fill")
-                }
+        var body: some View {
+            VStack(spacing: 2) {
+                Text("\(value)")
+                    .font(.headline)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
+            .frame(minWidth: 60, idealWidth: 80, maxWidth: 80, minHeight: 50)
+            .padding(.vertical, 5)
+            .background(Color.white)
+            .cornerRadius(5)
+            .shadow(radius: 2)
         }
     }
+    
+    private var statisticsView: some View {
+        HStack() {
+            HStack() {
+                ForEach([
+                    ("NYC", dispCounts.nycArea),
+                    ("Delivery", dispCounts.deliveryOnly),
+                    ("Total", dispCounts.all)
+                ], id: \.0) { label, value in
+                    StatCard(label: label, value: value)
+                }
+            }
+            Spacer()
+            HStack() {
+                Toggle("NYC Only", isOn: $nycOnlyMode)
+                    .toggleStyle(SwitchToggleStyle(tint: .blue)).fixedSize()
+                Button(action: { showDeveloperView = true }) {
+                    Image(systemName: "hammer.fill")
+                        .foregroundColor(.blue)
+                }
+                .padding(.leading, 10)
+            }.lineLimit(1)
+        }
+        .padding(10)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(10)
+    }
+
 
     private var fetchingDataView: some View {
         Text("Loading data from https://cannabis.ny.gov/dispensary-location-verification...")
@@ -193,7 +221,7 @@ struct ContentView: View {
     var dispCounts: DispensaryCounts {        
         let allCount = mapViewModel.allDispensaries.count
         let deliveryOnlyCount = mapViewModel.allDispensaries.filter { $0.isTemporaryDeliveryOnly }.count
-        let nycAreaCount = filteredDispensaries.count
+        let nycAreaCount = mapViewModel.allDispensaries.filter { mapViewModel.nycZipCodes.contains($0.zipCode) }.count
         
         return DispensaryCounts(
             all: allCount,
