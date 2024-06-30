@@ -8,11 +8,11 @@
 import Foundation
 import SwiftUI
 
-func logCoordinates(_ dispensaries: [Dispensary], onlyNonCached: Bool) -> String {
+func logUncachedCoordinates(_ dispensaries: [Dispensary], onlyNonCached: Bool) -> String {
     var log = "let dispensaryCoordinates: [String: CLLocationCoordinate2D] = [\""
     for dispensary in dispensaries {
         if let coordinate = dispensary.coordinate, let fullAddress = dispensary.fullAddress {
-            if !onlyNonCached || (onlyNonCached && DispensaryData.shared.getCoordinate(for: fullAddress) == nil) {
+            if DispensaryData.shared.getCoordinate(for: fullAddress) == nil {
                 log += "\"\(fullAddress)\": CLLocationCoordinate2D(latitude: \(coordinate.latitude), longitude: \(coordinate.longitude)),\n"
             }
         }
@@ -25,36 +25,27 @@ struct DeveloperView: View {
     @Environment(\.dismiss) private var dismiss
     
     @ObservedObject var mapViewModel: MapViewModel
-    @State private var geocodingLog: String = ""
-    @State private var newGeocodingLog: String = ""
+    @State private var uncachedDispensaryCoordinates: String = ""
     @State private var nycZipCodes: String = ""
     @State private var showingCopiedAlert = false
 
     var body: some View {
-        VStack {
-            HStack {
-                Button(action: {
-                    dismiss()
-                }) {
-                    Image(systemName: "xmark")
-                        .foregroundColor(.gray)
-                        .padding()
-                }
-                Spacer()
-            }.frame(alignment: .topLeading)
-        }
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-
                     geocodingLogSection
-                    newGeocodingResultsSection
                     zipCodesSection
                     dispensaryDebugSection
                 }
                 .padding()
             }
             .navigationTitle("Developer View")
+            .navigationBarItems(trailing: Button(action: {
+                dismiss()
+            }) {
+                Image(systemName: "xmark")
+                    .foregroundColor(.gray)
+            })
         }
         .alert("Copied to Clipboard", isPresented: $showingCopiedAlert) {
             Button("OK", role: .cancel) {}
@@ -65,8 +56,7 @@ struct DeveloperView: View {
     }
 
     private func loadData() {
-        geocodingLog = logCoordinates(mapViewModel.allDispensaries, onlyNonCached: false)
-        newGeocodingLog = logCoordinates(mapViewModel.allDispensaries, onlyNonCached: true)
+        uncachedDispensaryCoordinates = logUncachedCoordinates(mapViewModel.allDispensaries, onlyNonCached: true)
         Task {
             do {
                 let zipCodes = try await NetworkManager.shared.fetchAllNYCZipCodes()
@@ -81,33 +71,14 @@ struct DeveloperView: View {
     private var geocodingLogSection: some View {
         VStack(alignment: .leading) {
             HStack {
-                Text("Geocoding Log").font(.headline)
+                Text("Geocoding Results not in source cache").font(.headline)
                 Spacer()
                 Button("Copy All") {
-                    UIPasteboard.general.string = geocodingLog
+                    UIPasteboard.general.string = uncachedDispensaryCoordinates
                     showingCopiedAlert = true
                 }
             }
-            if !geocodingLog.isEmpty {
-                TextEditor(text: .constant(geocodingLog))
-                    .font(.system(.body, design: .monospaced))
-                    .frame(height: 200)
-                    .border(Color.gray, width: 1)
-            }
-        }
-    }
-    
-    private var newGeocodingResultsSection: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                Text("New Geocoding Results").font(.headline)
-                Spacer()
-                Button("Copy All") {
-                    UIPasteboard.general.string = newGeocodingLog
-                    showingCopiedAlert = true
-                }
-            }
-            TextEditor(text: .constant(newGeocodingLog))
+            TextEditor(text: .constant(uncachedDispensaryCoordinates))
                 .font(.system(.body, design: .monospaced))
                 .frame(height: 200)
                 .border(Color.gray, width: 1)
@@ -143,7 +114,7 @@ struct DeveloperView: View {
                     if let coordinate = dispensary.coordinate {
                         Text("Lat: \(coordinate.latitude), Lon: \(coordinate.longitude)")
                             .font(.caption)
-                    } else {
+                    } else if !dispensary.isTemporaryDeliveryOnly {
                         Text("Coordinate not available")
                             .font(.caption)
                             .foregroundColor(.red)

@@ -37,7 +37,7 @@ struct StatCard: View {
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
-        .frame(minWidth: 60, idealWidth: 80, maxWidth: 80, minHeight: 50)
+        .frame(minWidth: 20, idealWidth: 40, maxWidth: 80, minHeight: 30, idealHeight: 40)
         .padding(.vertical, 5)
         .background(Color.white)
         .cornerRadius(5)
@@ -85,7 +85,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            VStack(spacing: 20) {
+            VStack(spacing: 10) {
                 headerView
                 if let err = mapViewModel.errorMessage {
                     WarningNotice(warningMsg: err)
@@ -115,7 +115,6 @@ struct ContentView: View {
                     Spacer()
                 } else {
                     dispensaryListView
-                    statisticsView
                 }
             }
             .padding()
@@ -161,7 +160,7 @@ struct ContentView: View {
                 .padding(.leading, 10)
             }.lineLimit(1)
         }
-        .padding(10)
+        .padding(5)
         .background(Color.gray.opacity(0.1))
         .cornerRadius(10)
     }
