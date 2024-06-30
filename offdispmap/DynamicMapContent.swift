@@ -279,7 +279,6 @@ class MapViewModel: ObservableObject {
             async let zipCodesTask = fetchAllNYCZipCodes()
             
             let (fetchedDispensaries, fetchedZipCodes) = try await (dispensariesTask, zipCodesTask)
-            
             allDispensaries = fetchedDispensaries
             nycZipCodes = Set(fetchedZipCodes)
             for dispensary in allDispensaries {

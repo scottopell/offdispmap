@@ -25,6 +25,26 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     }
 }
 
+struct StatCard: View {
+    let label: String
+    let value: Int
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text("\(value)")
+                .font(.headline)
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .frame(minWidth: 60, idealWidth: 80, maxWidth: 80, minHeight: 50)
+        .padding(.vertical, 5)
+        .background(Color.white)
+        .cornerRadius(5)
+        .shadow(radius: 2)
+    }
+}
+
 
 struct DispensaryCounts {
     var all: Int
@@ -67,6 +87,9 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             VStack(spacing: 20) {
                 headerView
+                if let err = mapViewModel.errorMessage {
+                    WarningNotice(warningMsg: err)
+                }
                 if isFetching {
                     fetchingDataView
                     Spacer()
@@ -84,6 +107,9 @@ struct ContentView: View {
 
             VStack(spacing: 20) {
                 headerView
+                if let err = mapViewModel.errorMessage {
+                    WarningNotice(warningMsg: err)
+                }
                 if isFetching {
                     fetchingDataView
                     Spacer()
@@ -112,27 +138,7 @@ struct ContentView: View {
             .font(.title)
             .fontWeight(.bold)
     }
-    
-    struct StatCard: View {
-        let label: String
-        let value: Int
 
-        var body: some View {
-            VStack(spacing: 2) {
-                Text("\(value)")
-                    .font(.headline)
-                Text(label)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            .frame(minWidth: 60, idealWidth: 80, maxWidth: 80, minHeight: 50)
-            .padding(.vertical, 5)
-            .background(Color.white)
-            .cornerRadius(5)
-            .shadow(radius: 2)
-        }
-    }
-    
     private var statisticsView: some View {
         HStack() {
             HStack() {
