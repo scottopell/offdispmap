@@ -251,8 +251,21 @@ struct ContentView: View {
 
     private func selectDispensary(_ dispensary: Dispensary) {
         selectedDispensary = dispensary
+        if dispensary.isTemporaryDeliveryOnly {
+            // This is currently not possible due to the UI code,
+            // however this case should be gracefully handled probably?
+            // Maybe I can refactor this out of existence
+            return;
+        }
+        if dispensary.coordinate == nil {
+            // This should be rare, but its when we loaded
+            // too many dispensaries whose addresses were not in
+            // the address cache and we got rate limited while
+            // geocoding
+            // maybe I can also refactor this out of existence
+            return;
+        }
         Task {
-            await mapViewModel.loadCoordinates(dispensary: dispensary)
             if let annotation = mapViewModel.dispensaryAnnotations.first(where: { $0.dispensary == dispensary }) {
                 selectedAnnotation = annotation
                 selectedTab = "map"

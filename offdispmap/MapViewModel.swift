@@ -19,8 +19,8 @@ class MapViewModel: ObservableObject {
             async let dispensariesTask = NetworkManager.shared.fetchDispensaryData()
             async let zipCodesTask = NetworkManager.shared.fetchAllNYCZipCodes()
             
-            let (dispensaryHTML, fetchedZipCodes) = try await (dispensariesTask, zipCodesTask)
-            allDispensaries = DataParser.parseDispensaryHTML(dispensaryHTML)
+            let (dispensariesHTML, fetchedZipCodes) = try await (dispensariesTask, zipCodesTask)
+            allDispensaries = DataParser.parseDispensaryHTML(dispensariesHTML)
             nycZipCodes = Set(fetchedZipCodes)
             for dispensary in allDispensaries {
                 if let zipCode = dispensary.zipCode {
@@ -31,8 +31,11 @@ class MapViewModel: ObservableObject {
                     dispensary.coordinate = DispensaryData.shared.getCoordinate(for: fullAddress)
                 }
                 if dispensary.coordinate == nil {
-                    await dispensary.populateCoordinate()
+                    try await dispensary.populateCoordinate()
                 }
+                // The only way this will still be nil is if
+                // 1. The address given is garbage and doesn't geocode
+                // 2. We got rate limited while geocoding
                 if dispensary.coordinate != nil {
                     populateAnnotation(for: dispensary)
                 }
@@ -54,6 +57,11 @@ class MapViewModel: ObservableObject {
             case .unexpectedStatus(let status):
                 errorMessage = "Unexpected status: \(status)"
             }
+        } else if let geocodeError = error as? GeocodeError {
+            switch geocodeError {
+            case .other(let underlyingError):
+                errorMessage = "Geocoding error: \(underlyingError.localizedDescription)"
+            }
         } else {
             errorMessage = "An unknown error occurred: \(error.localizedDescription)"
         }
@@ -62,19 +70,11 @@ class MapViewModel: ObservableObject {
     }
     
     func populateAnnotation(for dispensary: Dispensary) {
-         if let annotation = dispensary.getAnnotation() {
-            dispensaryAnnotations.append(annotation)
-        } else {
+        guard let annotation = dispensary.getAnnotation() else {
             print("Was asked to load the annotation for dispensary \(dispensary.name) but couldn't do it")
-        }
-    }
-    
-    func loadCoordinates(dispensary: Dispensary) async {
-        if dispensary.isTemporaryDeliveryOnly || dispensary.coordinate != nil {
             return
-        }
-        await dispensary.populateCoordinate()
-
-        populateAnnotation(for: dispensary)
+        };
+        
+        dispensaryAnnotations.append(annotation)
     }
 }

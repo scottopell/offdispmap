@@ -9,6 +9,10 @@ import Foundation
 import CoreLocation
 import MapKit
 
+enum GeocodeError: Error {
+    case other(Error)
+}
+
 @objc(Dispensary)
 class Dispensary: NSObject {
     var name: String
@@ -61,23 +65,32 @@ class Dispensary: NSObject {
         """
     }
     
-    func populateCoordinate() async {
+    func populateCoordinate() async throws {
         guard self.coordinate == nil && self.isTemporaryDeliveryOnly == false && self.fullAddress != nil else {
-            return;
+            return
         }
+        
         guard let fullAddress = self.fullAddress else {
-            return;
+            return
         }
+        
         do {
             let geocoder = CLGeocoder()
             Logger.info("Executing geocode for \(self.name) \"\(fullAddress)\"")
             let placemarks = try await geocoder.geocodeAddressString(fullAddress)
+            
             if let coordinate = placemarks.first?.location?.coordinate {
                 Logger.info("All placemarks found: \(placemarks)")
                 self.coordinate = coordinate
             }
+        } catch let error as CLError {
+            if error.code == .network {
+                throw GeocodeError.other(error)
+            } else {
+                throw GeocodeError.other(error)
+            }
         } catch {
-            print("Geocoding failed with error: \(error.localizedDescription)")
+            throw GeocodeError.other(error)
         }
     }
     
