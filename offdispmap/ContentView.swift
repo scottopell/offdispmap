@@ -175,13 +175,13 @@ struct ContentView: View {
         MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, annotationFilter: Binding(
             get: {
                 { annotation in
-                    self.nycOnlyMode ? mapViewModel.nycZipCodes.contains(annotation.dispensary.zipCode) : true
-
+                    self.nycOnlyMode && annotation.dispensary.isNYC
                 }
             },
             set: { _ in }
         ),            onAnnotationSelect: { annotation in
             selectDispensary(annotation.dispensary)
+            
         })
     }
 
@@ -204,7 +204,7 @@ struct ContentView: View {
             if deliveryOnlyMode {
                 WarningNotice(warningMsg: "Who knows where these places deliver to? Just because its listed here doesn't mean it delivers to you. Duh.")
             }
-            List(deliveryOnlyMode ? mapViewModel.allDispensaries.filter { $0.isTemporaryDeliveryOnly } : filteredDispensaries, id: \.name) { dispensary in
+            List(deliveryOnlyMode ? deliveryOnlyDispensaries : filteredDispensaries, id: \.name) { dispensary in
                 DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary) {
                     selectDispensary(dispensary)
                 }
@@ -226,8 +226,8 @@ struct ContentView: View {
     
     var dispCounts: DispensaryCounts {        
         let allCount = mapViewModel.allDispensaries.count
-        let deliveryOnlyCount = mapViewModel.allDispensaries.filter { $0.isTemporaryDeliveryOnly }.count
-        let nycAreaCount = mapViewModel.allDispensaries.filter { mapViewModel.nycZipCodes.contains($0.zipCode) }.count
+        let deliveryOnlyCount = deliveryOnlyDispensaries.count
+        let nycAreaCount = mapViewModel.allDispensaries.filter {$0.isNYC}.count
         
         return DispensaryCounts(
             all: allCount,
@@ -238,9 +238,15 @@ struct ContentView: View {
     
     private var filteredDispensaries: [Dispensary] {
         if nycOnlyMode {
-            return mapViewModel.allDispensaries.filter { mapViewModel.nycZipCodes.contains($0.zipCode) }
+            return mapViewModel.allDispensaries.filter {$0.isNYC }
         } else {
             return mapViewModel.allDispensaries
+        }
+    }
+    
+    private var deliveryOnlyDispensaries: [Dispensary] {
+        return mapViewModel.allDispensaries.filter {
+            $0.isTemporaryDeliveryOnly
         }
     }
 

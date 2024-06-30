@@ -41,10 +41,18 @@ struct DispensaryRow: View {
                     Text(dispensary.name)
                         .fontWeight(.bold)
                 }
-                HStack {
-                    Image(systemName: "map")
-                        .foregroundColor(.green)
-                    Text("\(dispensary.address), \(dispensary.city), \(dispensary.zipCode)")
+                if let address = dispensary.address, let city = dispensary.city, let zipCode = dispensary.zipCode {
+                    HStack {
+                        Image(systemName: "map")
+                            .foregroundColor(.green)
+                        Text("\(address), \(city), \(zipCode)")
+                    }
+                } else if let city = dispensary.city {
+                    HStack {
+                        Image(systemName: "map")
+                            .foregroundColor(.green)
+                        Text("\(city)")
+                    }
                 }
                 HStack {
                     Image(systemName: "link")
@@ -68,7 +76,9 @@ struct DispensaryRow: View {
                     if isSelected {
                         Image(systemName: "xmark.circle.fill").foregroundColor(.red)
                     } else {
-                        Image(systemName: "location.magnifyingglass").foregroundColor(.blue)
+                        if !dispensary.isTemporaryDeliveryOnly {
+                            Image(systemName: "location.magnifyingglass").foregroundColor(.blue)
+                        }
                     }
                 }
                 .onTapGesture {

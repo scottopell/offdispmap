@@ -15,52 +15,66 @@ import SwiftSoup
 @objc(Dispensary)
 class Dispensary: NSObject {
     var name: String
-    var address: String
-    var city: String
-    var zipCode: String
+    var address: String?
+    var city: String?
+    var zipCode: String?
     var website: String
     var url: URL?
-    var fullAddress: String
+    var fullAddress: String?
     var coordinate: CLLocationCoordinate2D?
     var isTemporaryDeliveryOnly: Bool
+    var isNYC: Bool
 
     
-    init(name: String, address: String, city: String, zipCode: String, website: String, url: URL?, isTemporaryDeliveryOnly: Bool, coordinate: CLLocationCoordinate2D?) {
+    init(name: String, address: String, city: String, zipCode: String, website: String, coordinate: CLLocationCoordinate2D?) {
+        var isTemporaryDeliveryOnly = false
+        var name = name
+        if name.hasSuffix("***") {
+            name = name.replacingOccurrences(of: "***", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            isTemporaryDeliveryOnly = true
+        }
+        let url = normalizeURL(from: website)
+
         self.name = name
-        self.address = address
-        self.city = city
-        self.zipCode = zipCode
+        self.address = address == "-" ? nil : address
+        self.city = city == "-" ? nil : city
+        self.zipCode = zipCode == "-" ? nil : zipCode
         self.website = website
         self.url = url
         self.isTemporaryDeliveryOnly = isTemporaryDeliveryOnly
         self.coordinate = coordinate
         self.fullAddress = "\(address), \(city), \(zipCode)"
+        self.isNYC = false
     }
     // Implementation of CustomStringConvertible
     override var description: String {
         return """
         Dispensary(
             name: "\(name)",
-            address: "\(address)",
-            city: "\(city)",
-            zipCode: "\(zipCode)",
+            address: "\(address != nil ? "\(address!)" : "nil")",
+            city: "\(city != nil ? "\(city!)" : "nil" )",
+            zipCode: "\(zipCode != nil ? "\(zipCode!)" : "nil")",
             website: "\(website)",
             url: "\(url != nil ? "\(url!)" : "nil")",
-            fullAddress: "\(fullAddress)",
+            fullAddress: "\(fullAddress != nil ? "\(fullAddress!)" : "nil")",
             isTemporaryDeliveryOnly: \(isTemporaryDeliveryOnly),
-            coordinate: \(coordinate.map { "(\($0.latitude), \($0.longitude))" } ?? "nil")
+            coordinate: \(coordinate.map { "(\($0.latitude), \($0.longitude))" } ?? "nil"),
+            isNYC: \(isNYC)
         )
         """
     }
     
     func populateCoordinate() async {
-        guard self.coordinate == nil && self.isTemporaryDeliveryOnly == false  else {
+        guard self.coordinate == nil && self.isTemporaryDeliveryOnly == false && self.fullAddress != nil else {
+            return;
+        }
+        guard let fullAddress = self.fullAddress else {
             return;
         }
         do {
             let geocoder = CLGeocoder()
-            Logger.info("Executing geocode for \(self.name) \"\(self.fullAddress)\"")
-            let placemarks = try await geocoder.geocodeAddressString(self.fullAddress)
+            Logger.info("Executing geocode for \(self.name) \"\(fullAddress)\"")
+            let placemarks = try await geocoder.geocodeAddressString(fullAddress)
             if let coordinate = placemarks.first?.location?.coordinate {
                 Logger.info("All placemarks found: \(placemarks)")
                 self.coordinate = coordinate
@@ -71,12 +85,12 @@ class Dispensary: NSObject {
     }
     
     func getAnnotation() -> DispensaryAnnotation? {
-        guard let coordinate = self.coordinate else {
+        guard let coordinate = self.coordinate, let fullAddress = self.fullAddress else {
             print("Can't get annotation, coordinate is nil")
             return nil
         }
 
-        return DispensaryAnnotation(dispensary: self, name: self.name, address: self.fullAddress, coordinate: coordinate)
+        return DispensaryAnnotation(dispensary: self, name: self.name, address: fullAddress, coordinate: coordinate)
     }
 }
 
@@ -131,15 +145,9 @@ class DispensaryManager {
             throw NSError(domain: "DataDecodingError", code: 1001, userInfo: [NSLocalizedDescriptionKey: "Failed to decode data into string"])
         }
         let dispensaries = parseHTMLContent(htmlString)
-        for dispensary in dispensaries {
-            if dispensary.coordinate == nil {
-                await dispensary.populateCoordinate()
-            }
-        }
         return dispensaries
     }
     
-    // todo surface There are currently 134 adult-use cannabis dispensaries across
     private func parseHTMLContent(_ html: String) -> [Dispensary] {
         do {
             var dispensaries: [Dispensary] = []
@@ -149,19 +157,11 @@ class DispensaryManager {
             for row in rows {
                 let columns = try row.select("td")
                 if columns.size() >= 5 {
-                    var name = try columns.get(0).text().trimmingCharacters(in: .whitespacesAndNewlines)
+                    let name = try columns.get(0).text().trimmingCharacters(in: .whitespacesAndNewlines)
                     let address = try columns.get(1).text().trimmingCharacters(in: .whitespacesAndNewlines)
                     let city = try columns.get(2).text().trimmingCharacters(in: .whitespacesAndNewlines)
                     let zipCode = try columns.get(3).text().trimmingCharacters(in: .whitespacesAndNewlines)
                     let website = try columns.get(4).text().trimmingCharacters(in: .whitespacesAndNewlines)
-                    
-                    var isTemporaryDeliveryOnly = false
-                    if name.hasSuffix("***") {
-                        name = name.replacingOccurrences(of: "***", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-                        isTemporaryDeliveryOnly = true
-                    }
-                    
-                    let url = normalizeURL(from: website)
                     
                     let dispensary = Dispensary(
                         name: name,
@@ -169,11 +169,8 @@ class DispensaryManager {
                         city: city,
                         zipCode: zipCode,
                         website: website,
-                        url: url,
-                        isTemporaryDeliveryOnly: isTemporaryDeliveryOnly,
                         coordinate: nil
                     )
-                    dispensary.coordinate = DispensaryData.shared.getCoordinate(for: dispensary.fullAddress)
 
                     Logger.info("Parsed dispensary and here it is \(dispensary)")
                     dispensaries.append(dispensary)
@@ -282,6 +279,16 @@ class MapViewModel: ObservableObject {
             allDispensaries = fetchedDispensaries
             nycZipCodes = Set(fetchedZipCodes)
             for dispensary in allDispensaries {
+                if let zipCode = dispensary.zipCode {
+                    let isNYC = nycZipCodes.contains(where: {$0 == zipCode})
+                    dispensary.isNYC = isNYC
+                }
+                if let fullAddress = dispensary.fullAddress {
+                    dispensary.coordinate = DispensaryData.shared.getCoordinate(for: fullAddress)
+                }
+                if dispensary.coordinate == nil {
+                    await dispensary.populateCoordinate()
+                }
                 if dispensary.coordinate != nil {
                     populateAnnotation(for: dispensary)
                 }
@@ -313,9 +320,9 @@ class MapViewModel: ObservableObject {
     func logCoordinates(onlyNonCached: Bool) -> String {
         var log = "let dispensaryCoordinates: [String: CLLocationCoordinate2D] = [\""
         for dispensary in allDispensaries {
-            if let coordinate = dispensary.coordinate {
-                if !onlyNonCached || (onlyNonCached && DispensaryData.shared.getCoordinate(for: dispensary.fullAddress) == nil) {
-                    log += "\"\(dispensary.fullAddress)\": CLLocationCoordinate2D(latitude: \(coordinate.latitude), longitude: \(coordinate.longitude)),\n"
+            if let coordinate = dispensary.coordinate, let fullAddress = dispensary.fullAddress {
+                if !onlyNonCached || (onlyNonCached && DispensaryData.shared.getCoordinate(for: fullAddress) == nil) {
+                    log += "\"\(fullAddress)\": CLLocationCoordinate2D(latitude: \(coordinate.latitude), longitude: \(coordinate.longitude)),\n"
                 }
             }
         }

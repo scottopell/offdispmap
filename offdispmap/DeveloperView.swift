@@ -124,7 +124,9 @@ struct DeveloperView: View {
             ForEach(mapViewModel.allDispensaries, id: \.name) { dispensary in
                 VStack(alignment: .leading) {
                     Text(dispensary.name).font(.subheadline)
-                    Text(dispensary.fullAddress).font(.caption)
+                    if let fullAddress = dispensary.fullAddress {
+                        Text(fullAddress).font(.caption)
+                    }
                     if let coordinate = dispensary.coordinate {
                         Text("Lat: \(coordinate.latitude), Lon: \(coordinate.longitude)")
                             .font(.caption)
