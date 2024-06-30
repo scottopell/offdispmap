@@ -9,6 +9,8 @@ import Foundation
 import SwiftUI
 
 struct DeveloperView: View {
+    @Environment(\.dismiss) private var dismiss
+    
     @ObservedObject var mapViewModel: MapViewModel
     @State private var geocodingLog: String = ""
     @State private var newGeocodingLog: String = ""
@@ -16,9 +18,22 @@ struct DeveloperView: View {
     @State private var showingCopiedAlert = false
 
     var body: some View {
+        VStack {
+            HStack {
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "xmark")
+                        .foregroundColor(.gray)
+                        .padding()
+                }
+                Spacer()
+            }.frame(alignment: .topLeading)
+        }
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+
                     geocodingLogSection
                     newGeocodingResultsSection
                     zipCodesSection
