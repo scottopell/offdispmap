@@ -8,6 +8,19 @@
 import Foundation
 import SwiftUI
 
+func logCoordinates(_ dispensaries: [Dispensary], onlyNonCached: Bool) -> String {
+    var log = "let dispensaryCoordinates: [String: CLLocationCoordinate2D] = [\""
+    for dispensary in dispensaries {
+        if let coordinate = dispensary.coordinate, let fullAddress = dispensary.fullAddress {
+            if !onlyNonCached || (onlyNonCached && DispensaryData.shared.getCoordinate(for: fullAddress) == nil) {
+                log += "\"\(fullAddress)\": CLLocationCoordinate2D(latitude: \(coordinate.latitude), longitude: \(coordinate.longitude)),\n"
+            }
+        }
+    }
+    log += "]"
+    return log
+}
+
 struct DeveloperView: View {
     @Environment(\.dismiss) private var dismiss
     
@@ -52,11 +65,11 @@ struct DeveloperView: View {
     }
 
     private func loadData() {
-        geocodingLog = mapViewModel.logCoordinates(onlyNonCached: false)
-        newGeocodingLog = mapViewModel.logCoordinates(onlyNonCached: true)
+        geocodingLog = logCoordinates(mapViewModel.allDispensaries, onlyNonCached: false)
+        newGeocodingLog = logCoordinates(mapViewModel.allDispensaries, onlyNonCached: true)
         Task {
             do {
-                let zipCodes = try await fetchAllNYCZipCodes()
+                let zipCodes = try await NetworkManager.shared.fetchAllNYCZipCodes()
                 nycZipCodes = zipCodes.sorted().map({ "\"\($0)\"" }).joined(separator: ", ")
             } catch {
                 print("Error fetching NYC zip codes: \(error)")

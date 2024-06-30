@@ -175,7 +175,7 @@ struct ContentView: View {
         MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, annotationFilter: Binding(
             get: {
                 { annotation in
-                    self.nycOnlyMode && annotation.dispensary.isNYC
+                    (self.nycOnlyMode ? annotation.dispensary.isNYC : true)
                 }
             },
             set: { _ in }
