@@ -2,29 +2,6 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
-class LocationManager: NSObject, CLLocationManagerDelegate {
-    private let locationManager = CLLocationManager()
-    
-    override init() {
-        super.init()
-        locationManager.delegate = self
-        locationManager.requestWhenInUseAuthorization()
-    }
-    
-    // Handle the authorization status change
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        switch status {
-        case .authorizedWhenInUse, .authorizedAlways:
-            locationManager.startUpdatingLocation()
-        case .denied, .restricted:
-            // Handle denied or restricted status
-            break
-        default:
-            break
-        }
-    }
-}
-
 struct StatCard: View {
     let label: String
     let value: Int
@@ -131,7 +108,7 @@ struct ContentView: View {
         }
         #endif
         .onAppear {
-            let _ = LocationManager()
+            let _ = LocationManager.shared
             fetchDataIfNeeded()
         }
     }

@@ -9,10 +9,8 @@ import Foundation
 import CoreLocation
 import MapKit
 
-enum GeocodeError: Error {
-    case other(Error)
-}
 
+/*
 @objc(Dispensary)
 class Dispensary: NSObject {
     var name: String
@@ -103,6 +101,7 @@ class Dispensary: NSObject {
         return DispensaryAnnotation(dispensary: self, name: self.name, address: fullAddress, coordinate: coordinate)
     }
 }
+ */
 
 class DispensaryAnnotation: NSObject, MKAnnotation {
     var dispensary: Dispensary

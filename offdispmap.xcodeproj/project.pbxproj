@@ -18,6 +18,11 @@
 		471EBF1F2C1F43780016E689 /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471EBF1E2C1F43780016E689 /* MapViewModel.swift */; };
 		471EBF212C1F48C00016E689 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471EBF202C1F48C00016E689 /* MapView.swift */; };
 		471EBF252C1F936E0016E689 /* DispensaryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 471EBF242C1F936E0016E689 /* DispensaryRow.swift */; };
+		4743D4942C38691900183E19 /* DispensaryModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 4743D4922C38691900183E19 /* DispensaryModel.xcdatamodeld */; };
+		4743D4962C3869B600183E19 /* Dispensary+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4743D4952C3869B600183E19 /* Dispensary+CoreDataClass.swift */; };
+		4743D4982C386A1900183E19 /* Dispensary+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4743D4972C386A1900183E19 /* Dispensary+CoreDataProperties.swift */; };
+		4743D49A2C386A5000183E19 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4743D4992C386A5000183E19 /* CoreDataManager.swift */; };
+		4743D49C2C387E3400183E19 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4743D49B2C387E3400183E19 /* LocationManager.swift */; };
 		478CFA752C275729008C9CC5 /* DispensaryData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478CFA742C275729008C9CC5 /* DispensaryData.swift */; };
 		478CFA772C27597C008C9CC5 /* logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478CFA762C27597C008C9CC5 /* logger.swift */; };
 		47CA9C5A2C303D0B00C27BA8 /* DeveloperView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47CA9C592C303D0B00C27BA8 /* DeveloperView.swift */; };
@@ -57,6 +62,11 @@
 		471EBF1E2C1F43780016E689 /* MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewModel.swift; sourceTree = "<group>"; };
 		471EBF202C1F48C00016E689 /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 		471EBF242C1F936E0016E689 /* DispensaryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispensaryRow.swift; sourceTree = "<group>"; };
+		4743D4932C38691900183E19 /* DispensaryModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = DispensaryModel.xcdatamodel; sourceTree = "<group>"; };
+		4743D4952C3869B600183E19 /* Dispensary+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dispensary+CoreDataClass.swift"; sourceTree = "<group>"; };
+		4743D4972C386A1900183E19 /* Dispensary+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dispensary+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		4743D4992C386A5000183E19 /* CoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
+		4743D49B2C387E3400183E19 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		478CFA742C275729008C9CC5 /* DispensaryData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispensaryData.swift; sourceTree = "<group>"; };
 		478CFA762C27597C008C9CC5 /* logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = logger.swift; sourceTree = "<group>"; };
 		47CA9C592C303D0B00C27BA8 /* DeveloperView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeveloperView.swift; sourceTree = "<group>"; };
@@ -120,6 +130,7 @@
 				4700608E2C1F18C5008B3692 /* Assets.xcassets */,
 				470060902C1F18C5008B3692 /* Preview Content */,
 				471EBF1E2C1F43780016E689 /* MapViewModel.swift */,
+				4743D4922C38691900183E19 /* DispensaryModel.xcdatamodeld */,
 				471EBF242C1F936E0016E689 /* DispensaryRow.swift */,
 				471EBF202C1F48C00016E689 /* MapView.swift */,
 				478CFA762C27597C008C9CC5 /* logger.swift */,
@@ -127,6 +138,10 @@
 				47CA9C5B2C31D4AF00C27BA8 /* DispensaryModel.swift */,
 				47CA9C5D2C31D4E400C27BA8 /* DataParser.swift */,
 				47CA9C5F2C31D73F00C27BA8 /* NetworkManager.swift */,
+				4743D4952C3869B600183E19 /* Dispensary+CoreDataClass.swift */,
+				4743D4972C386A1900183E19 /* Dispensary+CoreDataProperties.swift */,
+				4743D4992C386A5000183E19 /* CoreDataManager.swift */,
+				4743D49B2C387E3400183E19 /* LocationManager.swift */,
 			);
 			path = offdispmap;
 			sourceTree = "<group>";
@@ -295,6 +310,8 @@
 				4700608D2C1F18C4008B3692 /* ContentView.swift in Sources */,
 				47CA9C5C2C31D4AF00C27BA8 /* DispensaryModel.swift in Sources */,
 				471EBF212C1F48C00016E689 /* MapView.swift in Sources */,
+				4743D49A2C386A5000183E19 /* CoreDataManager.swift in Sources */,
+				4743D49C2C387E3400183E19 /* LocationManager.swift in Sources */,
 				4700608B2C1F18C4008B3692 /* offdispmapApp.swift in Sources */,
 				47CA9C602C31D73F00C27BA8 /* NetworkManager.swift in Sources */,
 				471EBF1F2C1F43780016E689 /* MapViewModel.swift in Sources */,
@@ -303,6 +320,9 @@
 				478CFA752C275729008C9CC5 /* DispensaryData.swift in Sources */,
 				478CFA772C27597C008C9CC5 /* logger.swift in Sources */,
 				47CA9C5A2C303D0B00C27BA8 /* DeveloperView.swift in Sources */,
+				4743D4962C3869B600183E19 /* Dispensary+CoreDataClass.swift in Sources */,
+				4743D4942C38691900183E19 /* DispensaryModel.xcdatamodeld in Sources */,
+				4743D4982C386A1900183E19 /* Dispensary+CoreDataProperties.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -649,6 +669,20 @@
 			productName = SwiftSoup;
 		};
 /* End XCSwiftPackageProductDependency section */
+
+/* Begin XCVersionGroup section */
+		4743D4922C38691900183E19 /* DispensaryModel.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				4743D4932C38691900183E19 /* DispensaryModel.xcdatamodel */,
+			);
+			currentVersion = 4743D4932C38691900183E19 /* DispensaryModel.xcdatamodel */;
+			name = DispensaryModel.xcdatamodeld;
+			path = /Users/scottopell/dev/offdispmap/offdispmap/DispensaryModel.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 4700607F2C1F18C4008B3692 /* Project object */;
 }

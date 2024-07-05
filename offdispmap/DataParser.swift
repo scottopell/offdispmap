@@ -8,10 +8,18 @@
 import Foundation
 import SwiftSoup
 
+struct ParsedDispensary {
+    let name: String
+    let address: String
+    let city: String
+    let zipCode: String
+    let website: String
+}
+
 class DataParser {
-    static func parseDispensaryHTML(_ html: String) -> [Dispensary] {
+    static func parseDispensaryHTML(_ html: String) -> [ParsedDispensary] {
         do {
-            var dispensaries: [Dispensary] = []
+            var dispensaries: [ParsedDispensary] = []
             let doc = try SwiftSoup.parse(html)
             let rows = try doc.select("table tbody tr")
             
@@ -24,16 +32,15 @@ class DataParser {
                     let zipCode = try columns.get(3).text().trimmingCharacters(in: .whitespacesAndNewlines)
                     let website = try columns.get(4).text().trimmingCharacters(in: .whitespacesAndNewlines)
                     
-                    let dispensary = Dispensary(
+                    let parsedDispensary = ParsedDispensary(
                         name: name,
                         address: address,
                         city: city,
                         zipCode: zipCode,
-                        website: website,
-                        coordinate: nil
+                        website: website
                     )
 
-                    dispensaries.append(dispensary)
+                    dispensaries.append(parsedDispensary)
                 }
             }
             return dispensaries
