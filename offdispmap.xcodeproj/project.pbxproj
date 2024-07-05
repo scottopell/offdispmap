@@ -124,24 +124,24 @@
 		470060892C1F18C4008B3692 /* offdispmap */ = {
 			isa = PBXGroup;
 			children = (
-				4700608A2C1F18C4008B3692 /* offdispmapApp.swift */,
-				4700608C2C1F18C4008B3692 /* ContentView.swift */,
-				478CFA742C275729008C9CC5 /* DispensaryData.swift */,
 				4700608E2C1F18C5008B3692 /* Assets.xcassets */,
-				470060902C1F18C5008B3692 /* Preview Content */,
-				471EBF1E2C1F43780016E689 /* MapViewModel.swift */,
-				4743D4922C38691900183E19 /* DispensaryModel.xcdatamodeld */,
-				471EBF242C1F936E0016E689 /* DispensaryRow.swift */,
-				471EBF202C1F48C00016E689 /* MapView.swift */,
-				478CFA762C27597C008C9CC5 /* logger.swift */,
-				47CA9C592C303D0B00C27BA8 /* DeveloperView.swift */,
-				47CA9C5B2C31D4AF00C27BA8 /* DispensaryModel.swift */,
+				4700608C2C1F18C4008B3692 /* ContentView.swift */,
+				4743D4992C386A5000183E19 /* CoreDataManager.swift */,
 				47CA9C5D2C31D4E400C27BA8 /* DataParser.swift */,
-				47CA9C5F2C31D73F00C27BA8 /* NetworkManager.swift */,
+				47CA9C592C303D0B00C27BA8 /* DeveloperView.swift */,
 				4743D4952C3869B600183E19 /* Dispensary+CoreDataClass.swift */,
 				4743D4972C386A1900183E19 /* Dispensary+CoreDataProperties.swift */,
-				4743D4992C386A5000183E19 /* CoreDataManager.swift */,
+				478CFA742C275729008C9CC5 /* DispensaryData.swift */,
+				47CA9C5B2C31D4AF00C27BA8 /* DispensaryModel.swift */,
+				4743D4922C38691900183E19 /* DispensaryModel.xcdatamodeld */,
+				471EBF242C1F936E0016E689 /* DispensaryRow.swift */,
 				4743D49B2C387E3400183E19 /* LocationManager.swift */,
+				478CFA762C27597C008C9CC5 /* logger.swift */,
+				471EBF202C1F48C00016E689 /* MapView.swift */,
+				471EBF1E2C1F43780016E689 /* MapViewModel.swift */,
+				47CA9C5F2C31D73F00C27BA8 /* NetworkManager.swift */,
+				4700608A2C1F18C4008B3692 /* offdispmapApp.swift */,
+				470060902C1F18C5008B3692 /* Preview Content */,
 			);
 			path = offdispmap;
 			sourceTree = "<group>";

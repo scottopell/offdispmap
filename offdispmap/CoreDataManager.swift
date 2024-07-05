@@ -85,6 +85,22 @@ class CoreDataManager {
             return nil
         }
     }
+
+    func deleteAllData() {
+        let entities = persistentContainer.managedObjectModel.entities
+        entities.compactMap({ $0.name }).forEach(clearEntity)
+        saveContext()
+        Logger.info("Deleted all managedObjectModel.entities")
+    }
     
-    
+    private func clearEntity(_ entityName: String) {
+        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: entityName)
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        
+        do {
+            try persistentContainer.viewContext.execute(deleteRequest)
+        } catch {
+            print("Failed to clear entity \(entityName): \(error)")
+        }
+    }
 }

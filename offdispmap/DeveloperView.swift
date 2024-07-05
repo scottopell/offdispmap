@@ -33,6 +33,7 @@ struct DeveloperView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    coreDataSection
                     geocodingLogSection
                     zipCodesSection
                     dispensaryDebugSection
@@ -64,6 +65,14 @@ struct DeveloperView: View {
             } catch {
                 print("Error fetching NYC zip codes: \(error)")
                 nycZipCodes = "<error fetching: \(error)>"
+            }
+        }
+    }
+    
+    private var coreDataSection: some View {
+        HStack {
+            Button("Delete All Data") {
+                CoreDataManager.shared.deleteAllData()
             }
         }
     }

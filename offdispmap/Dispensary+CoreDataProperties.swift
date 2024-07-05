@@ -23,13 +23,6 @@ extension Dispensary {
     @NSManaged public var longitude: Double
     @NSManaged public var isTemporaryDeliveryOnly: Bool
     @NSManaged public var isNYC: Bool
-    
-    static func createFullAddress(address: String?, city: String?, zipCode: String?) -> String? {
-        guard let address = address, let city = city, let zipCode = zipCode else {
-            return nil
-        }
-        return "\(address), \(city), \(zipCode)"
-    }
 
     public var coordinate: CLLocationCoordinate2D? {
         get {
@@ -44,7 +37,7 @@ extension Dispensary {
 
     public var url: URL? {
         get {
-            return URL(string: website)
+            return normalizeURL(from: website)
         }
         set {
             website = newValue?.absoluteString ?? ""
@@ -53,7 +46,10 @@ extension Dispensary {
     
     public var fullAddress: String? {
         get {
-            return Dispensary.createFullAddress(address: address, city: city, zipCode: zipCode)
+            guard let address = address, let city = city, let zipCode = zipCode else {
+                return nil
+            }
+            return "\(address), \(city), \(zipCode)"
         }
         set {
             // no-op

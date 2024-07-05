@@ -10,15 +10,16 @@ import CoreLocation
 
 @MainActor
 class MapViewModel: ObservableObject {
-    @Published var allDispensaries: [Dispensary] = []
     @Published var dispensaryAnnotations: [DispensaryAnnotation] = []
     @Published var nycZipCodes: Set<String> = []
     @Published var errorMessage: String? = nil
+    
+    var allDispensaries: [Dispensary] {
+        CoreDataManager.shared.fetchDispensaries()
+    }
         
     
     func loadData() async {
-        // Load from Core Data
-        self.allDispensaries = CoreDataManager.shared.fetchDispensaries()
         self.updateAnnotations()
         
         // Fetch new data in the background
@@ -59,35 +60,37 @@ class MapViewModel: ObservableObject {
                     isTemporaryDeliveryOnly: isTemporaryDeliveryOnly,
                     isNYC: nycZipCodes.contains(where: {$0 == parsedDispensary.zipCode})
                 ) {
-
-                    if dispensary.coordinate == nil {
-                        if let fullAddress = Dispensary.createFullAddress(address: parsedDispensary.address, city: parsedDispensary.city, zipCode: parsedDispensary.zipCode) {
-                            if let coordinate = DispensaryData.shared.getCoordinate(for: fullAddress) {
-                                dispensary.latitude = coordinate.latitude
-                                dispensary.longitude = coordinate.longitude
-                            } else {
-                                // If lookup fails, then this entry needs to be geocoded.
-                                // If the geocoding fails, this dispensary is skipped
-                                // This could result in incomplete listings,
-                                // so TODO background periodic refresh.
-                                if let coordinate = try await LocationManager.shared.geocodeFullAddress(fullAddress) {
-                                    dispensary.latitude = coordinate.latitude
-                                    dispensary.longitude = coordinate.longitude
-                                }
-                            }
-                            // TODO does this give me duplicates when I refresh fetchAndUpdateData?
-                            // Maybe allDispensaries shouldbe a computed property that fetches from coredata?
-                            // idk the best practice here
-                            allDispensaries.append(dispensary)
-                            
-                        }
+                    if !isTemporaryDeliveryOnly {
+                        try await loadAddressForDispensary(dispensary)
                     }
                 }
-                CoreDataManager.shared.saveContext()
             }
+            CoreDataManager.shared.saveContext()
             self.updateAnnotations()
         } catch {
             handleError(error)
+        }
+    }
+    
+    private func loadAddressForDispensary(_ dispensary: Dispensary) async throws {
+        if dispensary.coordinate != nil {
+            return;
+        }
+        guard let fullAddress = dispensary.fullAddress else {
+            return;
+        }
+        if let coordinate = DispensaryData.shared.getCoordinate(for: fullAddress) {
+            dispensary.latitude = coordinate.latitude
+            dispensary.longitude = coordinate.longitude
+        } else {
+            // If lookup fails, then this entry needs to be geocoded.
+            // If the geocoding fails, this dispensary is skipped
+            // This could result in incomplete listings,
+            // so TODO background periodic refresh.
+            if let coordinate = try await LocationManager.shared.geocodeFullAddress(fullAddress) {
+                dispensary.latitude = coordinate.latitude
+                dispensary.longitude = coordinate.longitude
+            }
         }
     }
     
