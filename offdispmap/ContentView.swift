@@ -80,7 +80,9 @@ struct ContentView: View {
     @State private var nycOnlyMode = true
     @State private var deliveryOnlyMode = false
     @State private var selectedTab = "map"
+    #if DEBUG
     @State private var showDeveloperView = false
+    #endif
 
 
     var body: some View {
@@ -123,9 +125,11 @@ struct ContentView: View {
             }
             .tag("list")
         }
+        #if DEBUG
         .sheet(isPresented: $showDeveloperView) {
             DeveloperView(mapViewModel: mapViewModel)
         }
+        #endif
         .onAppear {
             let _ = LocationManager()
             fetchDataIfNeeded()
@@ -153,11 +157,13 @@ struct ContentView: View {
             HStack() {
                 Toggle("NYC Only", isOn: $nycOnlyMode)
                     .toggleStyle(SwitchToggleStyle(tint: .blue)).fixedSize()
+                #if DEBUG
                 Button(action: { showDeveloperView = true }) {
                     Image(systemName: "hammer.fill")
                         .foregroundColor(.blue)
                 }
                 .padding(.leading, 10)
+                #endif
             }.lineLimit(1)
         }
         .padding(5)
