@@ -236,35 +236,29 @@ struct ContentView: View {
         let (dispensariesHTML, fetchedZipCodes) = try await (NetworkManager.shared.fetchDispensaryData(), NetworkManager.shared.fetchAllNYCZipCodes())
         let parsedDispensaries = DataParser.parseDispensaryHTML(dispensariesHTML)
         let nycZipCodes = Set(fetchedZipCodes)
-        
-        // TODO does this need to be MainActor.run?
-        // its not updating state, its just updating coredata, which is explicitly saved
-        await MainActor.run {
-            for parsedDispensary in parsedDispensaries {
-                var isTemporaryDeliveryOnly = false
-                var name = parsedDispensary.name
-                if name.hasSuffix("***") {
-                    name = name.replacingOccurrences(of: "***", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-                    isTemporaryDeliveryOnly = true
-                }
-                
-                if let dispensary = CoreDataManager.shared.createOrUpdateDispensary(
-                    name: name,
-                    address: parsedDispensary.address,
-                    city: parsedDispensary.city,
-                    zipCode: parsedDispensary.zipCode,
-                    website: parsedDispensary.website,
-                    isTemporaryDeliveryOnly: isTemporaryDeliveryOnly,
-                    isNYC: nycZipCodes.contains(where: {$0 == parsedDispensary.zipCode})
-                ) {
-                    if !isTemporaryDeliveryOnly {
-                        Task {
-                            try await loadAddressForDispensary(dispensary)
-                        }
-                    }
-                }
+
+        for parsedDispensary in parsedDispensaries {
+            var isTemporaryDeliveryOnly = false
+            var name = parsedDispensary.name
+            if name.hasSuffix("***") {
+                name = name.replacingOccurrences(of: "***", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                isTemporaryDeliveryOnly = true
             }
             
+            if let dispensary = CoreDataManager.shared.createOrUpdateDispensary(
+                name: name,
+                address: parsedDispensary.address,
+                city: parsedDispensary.city,
+                zipCode: parsedDispensary.zipCode,
+                website: parsedDispensary.website,
+                isTemporaryDeliveryOnly: isTemporaryDeliveryOnly,
+                isNYC: nycZipCodes.contains(where: {$0 == parsedDispensary.zipCode})
+            ) {
+                if !isTemporaryDeliveryOnly {
+                    try await loadAddressForDispensary(dispensary)
+                }
+            }
+                
             try? viewContext.save()
         }
     }
