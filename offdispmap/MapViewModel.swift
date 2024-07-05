@@ -7,31 +7,53 @@
 
 import Foundation
 import CoreLocation
+import CoreData
 
 @MainActor
-class MapViewModel: ObservableObject {
-    @Published var dispensaryAnnotations: [DispensaryAnnotation] = []
+class MapViewModel: NSObject, ObservableObject, NSFetchedResultsControllerDelegate {
     @Published var nycZipCodes: Set<String> = []
     @Published var errorMessage: String? = nil
     
+    private let fetchedResultsController: NSFetchedResultsController<Dispensary>
+        
+    override init() {
+        let fetchRequest: NSFetchRequest<Dispensary> = Dispensary.fetchRequest()
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
+        
+        self.fetchedResultsController = NSFetchedResultsController(
+            fetchRequest: fetchRequest,
+            managedObjectContext: CoreDataManager.shared.context,
+            sectionNameKeyPath: nil,
+            cacheName: nil
+        )
+        
+        super.init()
+        
+        self.fetchedResultsController.delegate = self
+        
+        do {
+            try self.fetchedResultsController.performFetch()
+        } catch {
+            print("Failed to fetch dispensaries: \(error)")
+        }
+    }
+    
     var allDispensaries: [Dispensary] {
-        CoreDataManager.shared.fetchDispensaries()
+        return fetchedResultsController.fetchedObjects ?? []
+    }
+    
+    var dispensaryAnnotations: [DispensaryAnnotation] {
+        return allDispensaries.compactMap { dispensary in
+            guard let coordinate = dispensary.coordinate else { return nil }
+            return DispensaryAnnotation(dispensary: dispensary, name: dispensary.name, address: dispensary.fullAddress ?? "", coordinate: coordinate)
+        }
     }
         
     
     func loadData() async {
-        self.updateAnnotations()
-        
         // Fetch new data in the background
         Task {
             await self.fetchAndUpdateData()
-        }
-    }
-    
-    private func updateAnnotations() {
-        self.dispensaryAnnotations = self.allDispensaries.compactMap { dispensary in
-            guard let coordinate = dispensary.coordinate else { return nil }
-            return DispensaryAnnotation(dispensary: dispensary, name: dispensary.name, address: dispensary.fullAddress ?? "", coordinate: coordinate)
         }
     }
 
@@ -66,7 +88,6 @@ class MapViewModel: ObservableObject {
                 }
             }
             CoreDataManager.shared.saveContext()
-            self.updateAnnotations()
         } catch {
             handleError(error)
         }
@@ -118,17 +139,5 @@ class MapViewModel: ObservableObject {
         }
         
         print("Failed to load data: \(errorMessage ?? "Unknown error")")
-    }
-    
-    func populateAnnotation(for dispensary: Dispensary) {
-        guard let coordinate = dispensary.coordinate, let fullAddress = dispensary.fullAddress else {
-            print("Can't get annotation, coordinate is nil")
-            return
-        }
-
-        let annotation = DispensaryAnnotation(dispensary: dispensary, name: dispensary.name, address: fullAddress, coordinate: coordinate)
-
-        
-        dispensaryAnnotations.append(annotation)
     }
 }

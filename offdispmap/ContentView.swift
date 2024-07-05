@@ -154,17 +154,15 @@ struct ContentView: View {
     }
 
     private var mapView: some View {
-        MapView(annotations: $mapViewModel.dispensaryAnnotations, selectedAnnotation: $selectedAnnotation, annotationFilter: Binding(
-            get: {
-                { annotation in
+        MapView(
+            annotations: mapViewModel.dispensaryAnnotations,
+            selectedAnnotation: selectedAnnotation,
+            annotationFilter: { annotation in
                     (self.nycOnlyMode ? annotation.dispensary.isNYC : true)
-                }
             },
-            set: { _ in }
-        ),            onAnnotationSelect: { annotation in
-            selectDispensary(annotation.dispensary)
-            
-        })
+            onAnnotationSelect: { annotation in
+                selectDispensary(annotation.dispensary)
+            })
     }
 
     private var selectedDispensaryView: some View {

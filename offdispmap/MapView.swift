@@ -14,9 +14,9 @@ import MapKit
 // while building this
 
 struct MapView: UIViewRepresentable {
-    @Binding var annotations: [DispensaryAnnotation]
-    @Binding var selectedAnnotation: DispensaryAnnotation?
-    @Binding var annotationFilter: ((DispensaryAnnotation) -> Bool)
+    var annotations: [DispensaryAnnotation]
+    var selectedAnnotation: DispensaryAnnotation?
+    var annotationFilter: ((DispensaryAnnotation) -> Bool)
     var onAnnotationSelect: ((DispensaryAnnotation) -> Void)?
 
     let nyc = MKCoordinateRegion(

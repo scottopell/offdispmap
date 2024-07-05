@@ -51,7 +51,7 @@
 /* Begin PBXFileReference section */
 		470060872C1F18C4008B3692 /* offdispmap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = offdispmap.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4700608A2C1F18C4008B3692 /* offdispmapApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = offdispmapApp.swift; sourceTree = "<group>"; };
-		4700608C2C1F18C4008B3692 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		4700608C2C1F18C4008B3692 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; wrapsLines = 1; };
 		4700608E2C1F18C5008B3692 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		470060912C1F18C5008B3692 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		470060972C1F18C5008B3692 /* offdispmapTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = offdispmapTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
