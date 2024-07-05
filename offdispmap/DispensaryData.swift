@@ -143,6 +143,10 @@ struct DispensaryData {
         "9200 Niagara Falls Blvd, Niagara Falls, 14304": CLLocationCoordinate2D(latitude: 43.0944113, longitude: -78.9566731),
         "1102 Bedford Ave, Brooklyn, 11216": CLLocationCoordinate2D(latitude: 40.6869809, longitude: -73.9549288),
         "123 E Willow St, Syracuse, 13202": CLLocationCoordinate2D(latitude: 43.0525938, longitude: -76.1513445),
+        "698 2nd Ave, New York, 10016": CLLocationCoordinate2D(latitude: 40.7470036, longitude: -73.9738931),
+        "1675 Route 9, Halfmoon, 12065": CLLocationCoordinate2D(latitude: 42.8604282, longitude: -73.7643345),
+        "531 Warren St, Hudson, 12434": CLLocationCoordinate2D(latitude: 42.2486535, longitude: -73.7857944),
+        "182 5th Ave, New York, 10010": CLLocationCoordinate2D(latitude: 40.7413619, longitude: -73.9901221),
     ]
     // Function to get coordinate for a dispensary
     func getCoordinate(for dispensaryFullAddress: String) -> CLLocationCoordinate2D? {

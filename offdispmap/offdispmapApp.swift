@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct offdispmapApp: App {
-    var body: some Scene {
+    let persistenceController = CoreDataManager.shared
+
+    var body: some Scene {  
         WindowGroup {
-            ContentView()
-        }
+           ContentView()
+               .environment(\.managedObjectContext, persistenceController.context)
+       }
     }
 }

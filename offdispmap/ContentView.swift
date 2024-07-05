@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import CoreLocation
+import CoreData
 
 struct StatCard: View {
     let label: String
@@ -47,16 +48,24 @@ struct WarningNotice: View {
     }
 }
 
-@MainActor
+
+
 struct ContentView: View {
-    @StateObject private var mapViewModel = MapViewModel()
+    @Environment(\.managedObjectContext) private var viewContext
+    
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Dispensary.name, ascending: true)],
+        animation: .default)
+    private var dispensaries: FetchedResults<Dispensary>
+    
     @State private var selectedDispensary: Dispensary?
     @State private var selectedAnnotation: DispensaryAnnotation?
     @State private var hasFetched = false
-    @State private var isFetching = false
+    @State private var isLoading = false
     @State private var nycOnlyMode = true
     @State private var deliveryOnlyMode = false
     @State private var selectedTab = "map"
+    @State private var errorMessage: String?
     #if DEBUG
     @State private var showDeveloperView = false
     #endif
@@ -66,10 +75,10 @@ struct ContentView: View {
         TabView(selection: $selectedTab) {
             VStack(spacing: 10) {
                 headerView
-                if let err = mapViewModel.errorMessage {
+                if let err = errorMessage {
                     WarningNotice(warningMsg: err)
                 }
-                if isFetching {
+                if isLoading {
                     fetchingDataView
                     Spacer()
                 } else {
@@ -86,10 +95,10 @@ struct ContentView: View {
 
             VStack(spacing: 20) {
                 headerView
-                if let err = mapViewModel.errorMessage {
+                if let err = errorMessage {
                     WarningNotice(warningMsg: err)
                 }
-                if isFetching {
+                if isLoading {
                     fetchingDataView
                     Spacer()
                 } else {
@@ -104,12 +113,13 @@ struct ContentView: View {
         }
         #if DEBUG
         .sheet(isPresented: $showDeveloperView) {
-            DeveloperView(mapViewModel: mapViewModel)
+            DeveloperView()
+                .environment(\.managedObjectContext, viewContext)
         }
         #endif
         .onAppear {
             let _ = LocationManager.shared
-            fetchDataIfNeeded()
+            loadDataIfNeeded()
         }
     }
     private var headerView: some View {
@@ -155,7 +165,7 @@ struct ContentView: View {
 
     private var mapView: some View {
         MapView(
-            annotations: mapViewModel.dispensaryAnnotations,
+            annotations: dispensaryAnnotations,
             selectedAnnotation: selectedAnnotation,
             annotationFilter: { annotation in
                     (self.nycOnlyMode ? annotation.dispensary.isNYC : true)
@@ -177,14 +187,23 @@ struct ContentView: View {
     }
 
     private var dispensaryListView: some View {
-        VStack {
+        let displayDispensaries = dispensaries.filter { dispensary in
+            if deliveryOnlyMode && dispensary.isTemporaryDeliveryOnly == false {
+                return false
+            }
+            if nycOnlyMode && dispensary.isNYC == false {
+                return false
+            }
+            return true
+        }
+        return VStack {
             Toggle(isOn: $deliveryOnlyMode) {
                 Text("Delivery Only")
             }
             if deliveryOnlyMode {
                 WarningNotice(warningMsg: "Who knows where these places deliver to? Just because its listed here doesn't mean it delivers to you. Duh.")
             }
-            List(deliveryOnlyMode ? deliveryOnlyDispensaries : filteredDispensaries, id: \.name) { dispensary in
+            List(displayDispensaries, id: \.name) { dispensary in
                 DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary) {
                     selectDispensary(dispensary)
                 }
@@ -192,22 +211,91 @@ struct ContentView: View {
         }
     }
     
-    private func fetchDataIfNeeded() {
-        if hasFetched {
-            return
-        }
-        isFetching = true
-        Task {
-            await mapViewModel.loadData()
-            hasFetched = true
-            isFetching = false
+    private var dispensaryAnnotations: [DispensaryAnnotation] {
+        dispensaries.compactMap { dispensary in
+            guard let coordinate = dispensary.coordinate else { return nil }
+            guard nycOnlyMode == true && dispensary.isNYC == true else {
+                return nil
+            }
+            return DispensaryAnnotation(dispensary: dispensary, name: dispensary.name, address: dispensary.fullAddress ?? "", coordinate: coordinate)
         }
     }
     
-    var dispCounts: DispensaryCounts {        
-        let allCount = mapViewModel.allDispensaries.count
+    private func loadDataIfNeeded() {
+        // TODO, if data has been recently fetched, then skip this
+        Task {
+            do {
+                try await fetchAndUpdateData()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+    
+    private func fetchAndUpdateData() async throws {
+        let (dispensariesHTML, fetchedZipCodes) = try await (NetworkManager.shared.fetchDispensaryData(), NetworkManager.shared.fetchAllNYCZipCodes())
+        let parsedDispensaries = DataParser.parseDispensaryHTML(dispensariesHTML)
+        let nycZipCodes = Set(fetchedZipCodes)
+        
+        // TODO does this need to be MainActor.run?
+        // its not updating state, its just updating coredata, which is explicitly saved
+        await MainActor.run {
+            for parsedDispensary in parsedDispensaries {
+                var isTemporaryDeliveryOnly = false
+                var name = parsedDispensary.name
+                if name.hasSuffix("***") {
+                    name = name.replacingOccurrences(of: "***", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    isTemporaryDeliveryOnly = true
+                }
+                
+                if let dispensary = CoreDataManager.shared.createOrUpdateDispensary(
+                    name: name,
+                    address: parsedDispensary.address,
+                    city: parsedDispensary.city,
+                    zipCode: parsedDispensary.zipCode,
+                    website: parsedDispensary.website,
+                    isTemporaryDeliveryOnly: isTemporaryDeliveryOnly,
+                    isNYC: nycZipCodes.contains(where: {$0 == parsedDispensary.zipCode})
+                ) {
+                    if !isTemporaryDeliveryOnly {
+                        Task {
+                            try await loadAddressForDispensary(dispensary)
+                        }
+                    }
+                }
+            }
+            
+            try? viewContext.save()
+        }
+    }
+    
+    private func loadAddressForDispensary(_ dispensary: Dispensary) async throws {
+        if dispensary.coordinate != nil {
+            return;
+        }
+        guard let fullAddress = dispensary.fullAddress else {
+            return;
+        }
+        if let coordinate = DispensaryData.shared.getCoordinate(for: fullAddress) {
+            dispensary.latitude = coordinate.latitude
+            dispensary.longitude = coordinate.longitude
+        } else {
+            Logger.info("Failed to lookup coordinate for '\(fullAddress)' in the map")
+            // If lookup fails, then this entry needs to be geocoded.
+            // If the geocoding fails, this dispensary is skipped
+            // This could result in incomplete listings,
+            // so TODO background periodic refresh.
+            if let coordinate = try await LocationManager.shared.geocodeFullAddress(fullAddress) {
+                dispensary.latitude = coordinate.latitude
+                dispensary.longitude = coordinate.longitude
+            }
+        }
+    }
+    
+    private var dispCounts: DispensaryCounts {
+        let allCount = dispensaries.count
         let deliveryOnlyCount = deliveryOnlyDispensaries.count
-        let nycAreaCount = mapViewModel.allDispensaries.filter {$0.isNYC}.count
+        let nycAreaCount = dispensaries.filter {$0.isNYC}.count
         
         return DispensaryCounts(
             all: allCount,
@@ -216,16 +304,8 @@ struct ContentView: View {
         )
     }
     
-    private var filteredDispensaries: [Dispensary] {
-        if nycOnlyMode {
-            return mapViewModel.allDispensaries.filter {$0.isNYC }
-        } else {
-            return mapViewModel.allDispensaries
-        }
-    }
-    
     private var deliveryOnlyDispensaries: [Dispensary] {
-        return mapViewModel.allDispensaries.filter {
+        return dispensaries.filter {
             $0.isTemporaryDeliveryOnly
         }
     }
@@ -247,7 +327,7 @@ struct ContentView: View {
             return;
         }
         Task {
-            if let annotation = mapViewModel.dispensaryAnnotations.first(where: { $0.dispensary == dispensary }) {
+            if let annotation = dispensaryAnnotations.first(where: { $0.dispensary == dispensary }) {
                 selectedAnnotation = annotation
                 selectedTab = "map"
             }

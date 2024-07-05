@@ -30,13 +30,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             break
         }
     }
-    
-    func getCoordinate(for fullAddress: String) -> CLLocationCoordinate2D? {
-        // This method should return a cached coordinate if available
-        // For this example, we'll just return nil
-        return nil
-    }
-    
+
     func geocodeFullAddress(_ fullAddress: String) async throws -> CLLocationCoordinate2D? {
         do {
             Logger.info("Executing geocode for \"\(fullAddress)\"")
