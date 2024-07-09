@@ -20,9 +20,9 @@ So you can look at it
 - [ ] Think about forward compatibility if upstream data changes format in a
   silent way (ie, don't override valid, cached data with invalid newly-parsed
   data)
-- [ ] Embedded Safari view bugs
-    - [ ] crash when clicking link with no network
-    - [ ] weird bottom visual artifacts when open
+- [x] Embedded Safari view bugs
+    - [x] crash when clicking link with no network
+    - [x] weird bottom visual artifacts when open
 - [ ] Test thoroughly on multiple devices and iOS versions
 - [ ] Optimize app performance and fix any crashes or bugs
 

@@ -4,24 +4,8 @@
 //
 //  Created by Scott Opell on 6/16/24.
 //
-
-import SwiftUI
-import SafariServices
-
-struct SafariView: UIViewControllerRepresentable {
-    let url: URL
-
-    func makeUIViewController(context: UIViewControllerRepresentableContext<SafariView>) -> SFSafariViewController {
-        return SFSafariViewController(url: url)
-    }
-
-    func updateUIViewController(_ uiViewController: SFSafariViewController, context: UIViewControllerRepresentableContext<SafariView>) {
-        // No need to update anything here
-    }
-}
-
-
 import Foundation
+import SafariServices
 import SwiftUI
 
 @MainActor
@@ -30,7 +14,7 @@ struct DispensaryRow: View {
     var isSelected: Bool = false
     var onSelect: () -> Void
     
-    @State private var safariURL: URL?
+    @State private var presentSafari = false
 
     var body: some View {
         HStack {
@@ -57,11 +41,11 @@ struct DispensaryRow: View {
                 HStack {
                     Image(systemName: "link")
                         .foregroundColor(.blue)
-                    if let url = dispensary.url {
+                    if dispensary.url != nil {
                         Text(dispensary.website)
                             .foregroundColor(.blue)
                             .onTapGesture {
-                                safariURL = url
+                                presentSafari = true
                             }
                     } else {
                         Text(dispensary.website)
@@ -88,20 +72,23 @@ struct DispensaryRow: View {
         }
         .background(isSelected ? Color.gray.opacity(0.2) : Color.clear)
         .cornerRadius(8)
-        .sheet(isPresented: Binding<Bool>(
-            get: { safariURL != nil },
-            set: { newValue in
-                if !newValue {
-                    safariURL = nil
-                }
+        .background(
+            EmptyView().sheet(isPresented: $presentSafari) {
+                SafariViewController(url: dispensary.url!)
+                    .edgesIgnoringSafeArea(.all)
             }
-        )) {
-            if let url = safariURL {
-                SafariView(url: url)
-            } else {
-                Text("No URL provided")
-            }
-        }
+        )
     }
 }
 
+
+struct SafariViewController: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: UIViewControllerRepresentableContext<SafariViewController>) -> SFSafariViewController {
+        return SFSafariViewController(url: url)
+    }
+
+    func updateUIViewController(_ uiViewController: SFSafariViewController, context: UIViewControllerRepresentableContext<SafariViewController>) {
+    }
+}
