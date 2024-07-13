@@ -42,7 +42,7 @@ struct WarningNotice: View {
                 .font(.body)
         }
         .padding()
-        .background(Color(UIColor.systemBackground).opacity(0.9))
+        .background(Color(UIColor.systemBackground).opacity(0.4))
         .cornerRadius(8)
         .shadow(radius: 2)
     }
@@ -54,9 +54,9 @@ struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
     
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Dispensary.name, ascending: true)],
+        sortDescriptors: [NSSortDescriptor(keyPath: \DispensaryCoreData.name, ascending: true)],
         animation: .default)
-    private var dispensaries: FetchedResults<Dispensary>
+    private var dispensaries: FetchedResults<DispensaryCoreData>
     
     @State private var selectedDispensary: Dispensary?
     @State private var selectedAnnotation: DispensaryAnnotation?
@@ -195,7 +195,7 @@ struct ContentView: View {
                 return false
             }
             return true
-        }
+        }.map { $0.toStruct }
         return VStack {
             Toggle(isOn: $deliveryOnlyMode) {
                 Text("Delivery Only")
@@ -204,7 +204,7 @@ struct ContentView: View {
                 WarningNotice(warningMsg: "Who knows where these places deliver to? Just because its listed here doesn't mean it delivers to you. Duh.")
             }
             List(displayDispensaries, id: \.name) { dispensary in
-                DispensaryRow(dispensary: dispensary, isSelected: dispensary == selectedDispensary) {
+                DispensaryRow(dispensary: dispensary, isSelected: dispensary.id == selectedDispensary?.id) {
                     selectDispensary(dispensary)
                 }
             }.listStyle(.plain)
@@ -217,7 +217,7 @@ struct ContentView: View {
             guard nycOnlyMode == true && dispensary.isNYC == true else {
                 return nil
             }
-            return DispensaryAnnotation(dispensary: dispensary, name: dispensary.name, address: dispensary.fullAddress ?? "", coordinate: coordinate)
+            return DispensaryAnnotation(dispensary: dispensary.toStruct, name: dispensary.name, address: dispensary.fullAddress ?? "", coordinate: coordinate)
         }
     }
     
@@ -263,7 +263,7 @@ struct ContentView: View {
         }
     }
     
-    private func loadAddressForDispensary(_ dispensary: Dispensary) async throws {
+    private func loadAddressForDispensary(_ dispensary: DispensaryCoreData) async throws {
         if dispensary.coordinate != nil {
             return;
         }
@@ -298,7 +298,7 @@ struct ContentView: View {
         )
     }
     
-    private var deliveryOnlyDispensaries: [Dispensary] {
+    private var deliveryOnlyDispensaries: [DispensaryCoreData] {
         return dispensaries.filter {
             $0.isTemporaryDeliveryOnly
         }
@@ -321,7 +321,7 @@ struct ContentView: View {
             return;
         }
         Task {
-            if let annotation = dispensaryAnnotations.first(where: { $0.dispensary == dispensary }) {
+            if let annotation = dispensaryAnnotations.first(where: { $0.dispensary.id == dispensary.id }) {
                 selectedAnnotation = annotation
                 selectedTab = "map"
             }

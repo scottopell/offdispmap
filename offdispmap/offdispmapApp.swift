@@ -13,8 +13,14 @@ struct offdispmapApp: App {
 
     var body: some Scene {  
         WindowGroup {
-           ContentView()
-               .environment(\.managedObjectContext, persistenceController.context)
+        #if os(iOS)
+            ContentViewiOS()
+                .environment(\.managedObjectContext, persistenceController.context)
+        #else
+            ContentView()
+                .environment(\.managedObjectContext, persistenceController.context)
+        #endif
+           
        }
     }
 }

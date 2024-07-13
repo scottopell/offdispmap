@@ -9,7 +9,7 @@ struct DeveloperView: View {
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Dispensary.name, ascending: true)],
         animation: .default)
-    private var dispensaries: FetchedResults<Dispensary>
+    private var dispensaries: FetchedResults<DispensaryCoreData>
     
     @State private var uncachedDispensaryCoordinates: String = ""
     @State private var showingCopiedAlert = false
@@ -105,7 +105,7 @@ struct DeveloperView: View {
     }
 }
 
-func logUncachedCoordinates(_ dispensaries: [Dispensary], onlyNonCached: Bool) -> String {
+func logUncachedCoordinates(_ dispensaries: [DispensaryCoreData], onlyNonCached: Bool) -> String {
     var log = "let dispensaryCoordinates: [String: CLLocationCoordinate2D] = ["
     for dispensary in dispensaries {
         if let coordinate = dispensary.coordinate, let fullAddress = dispensary.fullAddress {
