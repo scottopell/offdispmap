@@ -10,6 +10,6 @@ import CoreData
 import CoreLocation
 
 @objc(Dispensary)
-public class Dispensary: NSManagedObject {
+public class DispensaryCoreData: NSManagedObject {
     // This will be empty for now
 }

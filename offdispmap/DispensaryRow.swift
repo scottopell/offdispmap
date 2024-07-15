@@ -12,7 +12,7 @@ import SwiftUI
 struct DispensaryRow: View {
     var dispensary: Dispensary
     var isSelected: Bool = false
-    var onSelect: () -> Void
+    var onSelect: (() -> Void)? = nil
     
     @State private var presentSafari = false
 
@@ -55,18 +55,20 @@ struct DispensaryRow: View {
                 
             }
             Spacer()
-            VStack {
-                Group {
-                    if isSelected {
-                        Image(systemName: "xmark.circle.fill").foregroundColor(.red)
-                    } else {
-                        if !dispensary.isTemporaryDeliveryOnly {
-                            Image(systemName: "location.magnifyingglass").foregroundColor(.blue)
+            if let onSelect = onSelect {
+                VStack {
+                    Group {
+                        if isSelected {
+                            Image(systemName: "xmark.circle.fill").foregroundColor(.red)
+                        } else {
+                            if !dispensary.isTemporaryDeliveryOnly {
+                                Image(systemName: "location.magnifyingglass").foregroundColor(.blue)
+                            }
                         }
                     }
-                }
-                .onTapGesture {
-                    onSelect()
+                    .onTapGesture {
+                        onSelect()
+                    }
                 }
             }
         }
