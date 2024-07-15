@@ -29,6 +29,7 @@
 		47CA9C602C31D73F00C27BA8 /* NetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47CA9C5F2C31D73F00C27BA8 /* NetworkManager.swift */; };
 		D3A3CD122C42CED800060C53 /* DispensaryModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = D3A3CD102C42CED800060C53 /* DispensaryModel.xcdatamodeld */; };
 		D3A3CD142C42D06A00060C53 /* ContentViewiOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A3CD132C42D06900060C53 /* ContentViewiOS.swift */; };
+		D3A3CD162C44C20400060C53 /* MainViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A3CD152C44C20400060C53 /* MainViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +74,7 @@
 		47CA9C5F2C31D73F00C27BA8 /* NetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkManager.swift; sourceTree = "<group>"; };
 		D3A3CD112C42CED800060C53 /* DispensaryModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = DispensaryModel.xcdatamodel; sourceTree = "<group>"; };
 		D3A3CD132C42D06900060C53 /* ContentViewiOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentViewiOS.swift; sourceTree = "<group>"; };
+		D3A3CD152C44C20400060C53 /* MainViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -139,6 +141,7 @@
 				4743D49B2C387E3400183E19 /* LocationManager.swift */,
 				478CFA762C27597C008C9CC5 /* logger.swift */,
 				471EBF202C1F48C00016E689 /* MapView.swift */,
+				D3A3CD152C44C20400060C53 /* MainViewModel.swift */,
 				47CA9C5F2C31D73F00C27BA8 /* NetworkManager.swift */,
 				4700608A2C1F18C4008B3692 /* offdispmapApp.swift */,
 				470060902C1F18C5008B3692 /* Preview Content */,
@@ -315,6 +318,7 @@
 				4743D49C2C387E3400183E19 /* LocationManager.swift in Sources */,
 				D3A3CD122C42CED800060C53 /* DispensaryModel.xcdatamodeld in Sources */,
 				4700608B2C1F18C4008B3692 /* offdispmapApp.swift in Sources */,
+				D3A3CD162C44C20400060C53 /* MainViewModel.swift in Sources */,
 				47CA9C602C31D73F00C27BA8 /* NetworkManager.swift in Sources */,
 				471EBF252C1F936E0016E689 /* DispensaryRow.swift in Sources */,
 				47CA9C5E2C31D4E400C27BA8 /* DataParser.swift in Sources */,
