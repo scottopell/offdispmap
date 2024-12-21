@@ -37,8 +37,8 @@ class CoreDataManager {
         }
     }
     
-    func fetchDispensaries() -> [Dispensary] {
-        let request: NSFetchRequest<Dispensary> = Dispensary.fetchRequest()
+    func fetchDispensaries() -> [DispensaryCoreData] {
+        let request: NSFetchRequest<DispensaryCoreData> = DispensaryCoreData.fetchRequest()
         do {
             return try context.fetch(request)
         } catch {
@@ -55,18 +55,18 @@ class CoreDataManager {
         website: String,
         isTemporaryDeliveryOnly: Bool,
         isNYC: Bool
-    ) -> Dispensary? {
-        let fetchRequest: NSFetchRequest<Dispensary> = Dispensary.fetchRequest()
+    ) -> DispensaryCoreData? {
+        let fetchRequest: NSFetchRequest<DispensaryCoreData> = DispensaryCoreData.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "name == %@", name)
         
         do {
             let results = try context.fetch(fetchRequest)
-            let managedDispensary: Dispensary
+            let managedDispensary: DispensaryCoreData
             
             if let existingDispensary = results.first {
                 managedDispensary = existingDispensary
             } else {
-                managedDispensary = Dispensary(context: context)
+                managedDispensary = DispensaryCoreData(context: context)
             }
             
             // Update properties
