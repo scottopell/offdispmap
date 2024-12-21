@@ -39,6 +39,9 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
             if let coordinate = placemarks.first?.location?.coordinate {
                 Logger.info("Placemark found: \(placemarks.first!)")
                 return coordinate
+            } else {
+                Logger.error("Geocode for \"\(fullAddress)\" returned no usable placemarks")
+                Logger.error("Placemarks: \(placemarks)")
             }
         } catch let error as CLError {
             if error.code == .network {
